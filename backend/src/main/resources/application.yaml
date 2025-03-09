@@ -1,0 +1,5 @@
+spring:
+  datasource:
+    url: jdbc:mysql://localhost:5431/carRental
+    username: user
+    password: 123456
