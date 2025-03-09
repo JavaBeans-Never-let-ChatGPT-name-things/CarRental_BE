@@ -1,0 +1,17 @@
+name: carRental
+services:
+  mysql:
+    image: mysql:latest
+    environment:
+        - MYSQL_ROOT_PASSWORD=123456
+        - MYSQL_USER=user
+        - MYSQL_PASSWORD=123456
+        - MYSQL_DATABASE=carRental
+    healthcheck:
+      test: ["CMD", "mysqladmin" ,"ping", "-h", "localhost"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    restart: on-failure
+    ports:
+        - "5431:3306"
