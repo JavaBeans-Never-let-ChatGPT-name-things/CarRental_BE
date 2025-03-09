@@ -5,6 +5,9 @@ import jakarta.persistence.*;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
 
+import java.util.ArrayList;
+import java.util.List;
+
 @Setter
 @Getter
 @Entity
@@ -35,4 +38,13 @@ public class CarEntity extends AbstractAuditing<String> {
 
     @Column(name = "rating")
     float rating;
+
+    @OneToMany(mappedBy = "car",
+            cascade = {CascadeType.DETACH, CascadeType.MERGE, CascadeType.PERSIST, CascadeType.REFRESH},
+            fetch = FetchType.LAZY)
+    List<RentalContractEntity> rentalContracts = new ArrayList<>();
+
+    public void addContract(RentalContractEntity contract) {
+        rentalContracts.add(contract);
+    }
 }

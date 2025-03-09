@@ -6,6 +6,9 @@ import jakarta.persistence.*;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
 
+import java.util.ArrayList;
+import java.util.List;
+
 @Setter
 @Getter
 @Entity
@@ -53,4 +56,13 @@ public class AccountEntity extends AbstractAuditing<Long>{
     @Column(name = "role")
     @Enumerated(EnumType.STRING)
     AccountRole accountRole = AccountRole.USER;
+
+    @OneToMany(mappedBy = "account",
+            cascade = CascadeType.ALL,
+            fetch = FetchType.LAZY)
+    List<RentalContractEntity> rentalContracts = new ArrayList<>();
+
+    public void addContract(RentalContractEntity contract) {
+        rentalContracts.add(contract);
+    }
 }
