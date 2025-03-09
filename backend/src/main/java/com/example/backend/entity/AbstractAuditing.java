@@ -4,6 +4,7 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import jakarta.persistence.Column;
 import jakarta.persistence.EntityListeners;
 import jakarta.persistence.MappedSuperclass;
+import jakarta.persistence.Transient;
 import lombok.Getter;
 import lombok.Setter;
 import org.springframework.data.annotation.CreatedDate;
@@ -13,6 +14,9 @@ import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 import java.io.Serial;
 import java.io.Serializable;
 import java.time.Instant;
+import java.time.ZoneId;
+import java.time.ZoneOffset;
+import java.time.ZonedDateTime;
 
 @Setter
 @Getter
@@ -32,4 +36,14 @@ public abstract class AbstractAuditing<ID> implements Serializable {
     public Instant lastModifiedDate = Instant.now();
 
     public abstract ID getId();
+
+    @Transient
+    public ZonedDateTime getCreatedDateAtGMT7(){
+        return createdDate.atZone(ZoneOffset.UTC).withZoneSameInstant(ZoneId.of("Asia/Ho_Chi_Minh"));
+    }
+
+    @Transient
+    public ZonedDateTime getLastModifiedDateAtGMT7(){
+        return lastModifiedDate.atZone(ZoneOffset.UTC).withZoneSameInstant(ZoneId.of("Asia/Ho_Chi_Minh"));
+    }
 }
