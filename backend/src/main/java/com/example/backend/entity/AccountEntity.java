@@ -46,7 +46,7 @@ public class AccountEntity extends AbstractAuditing<Long>{
     @Column(name = "phone_number")
     String phoneNumber;
 
-    @Column(name = "avatar", columnDefinition = "text")
+    @Column(name = "avatar", columnDefinition = "TEXT")
     String avatarUrl;
 
     @Column(name = "status")
@@ -64,5 +64,25 @@ public class AccountEntity extends AbstractAuditing<Long>{
 
     public void addContract(RentalContractEntity contract) {
         rentalContracts.add(contract);
+    }
+
+    @OneToMany(mappedBy = "account_notification"
+            ,cascade = CascadeType.ALL,
+            fetch = FetchType.LAZY)
+    List<NotificationEntity> notifications = new ArrayList<>();
+
+    public void addNotification(NotificationEntity notification) {
+        notifications.add(notification);
+    }
+
+    @ManyToMany(cascade = CascadeType.ALL,
+                fetch = FetchType.LAZY)
+    @JoinTable ( name = "favourite_cars",
+                joinColumns = @JoinColumn(name = "account_id"),
+                inverseJoinColumns = @JoinColumn(name = "car_id"))
+    List<CarEntity> favouriteCars = new ArrayList<>();
+
+    public void addFavouriteCar(CarEntity car) {
+        favouriteCars.add(car);
     }
 }

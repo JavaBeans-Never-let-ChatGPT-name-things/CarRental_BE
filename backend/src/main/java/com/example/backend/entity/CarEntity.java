@@ -47,4 +47,13 @@ public class CarEntity extends AbstractAuditing<String> {
     public void addContract(RentalContractEntity contract) {
         rentalContracts.add(contract);
     }
+
+    @ManyToMany(cascade = {CascadeType.DETACH, CascadeType.MERGE, CascadeType.PERSIST, CascadeType.REFRESH}
+    ,fetch = FetchType.LAZY)
+    @JoinTable(
+            name = "favourite_cars",
+            joinColumns = @JoinColumn(name = "car_id"),
+            inverseJoinColumns = @JoinColumn(name = "account_id")
+    )
+    List<AccountEntity> accounts = new ArrayList<>();
 }

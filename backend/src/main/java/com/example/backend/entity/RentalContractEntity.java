@@ -55,4 +55,8 @@ public class RentalContractEntity extends AbstractAuditing<Long> {
 
     @Column(name = "penalty_fee")
     float penaltyFee;
+
+    @OneToOne(cascade = CascadeType.ALL)
+    @JoinColumn(name = "review_id")
+    ReviewEntity review;
 }
