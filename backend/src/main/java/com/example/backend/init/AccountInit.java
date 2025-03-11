@@ -23,18 +23,36 @@ public class AccountInit implements CommandLineRunner {
         if (accountRepository.count() > 0)
         {
             log.info("Accounts already exist");
-            return;
         }
-        log.info("No accounts found, creating new account");
-        accountRepository.save(
-                AccountEntity.builder()
-                        .username("test")
-                        .passwordHash(new BCryptPasswordEncoder(12).encode("123456"))
-                        .accountRole(AccountRole.USER)
-                        .accountStatus(AccountStatus.ACTIVE)
-                        .email("testingPurposeOnly@gmail.com")
-                        .displayName("Test User")
-                        .build()
-        );
+        else {
+            log.info("No accounts found, creating new account");
+            accountRepository.save(
+                    AccountEntity.builder()
+                            .username("test")
+                            .passwordHash(new BCryptPasswordEncoder(12).encode("123456"))
+                            .accountRole(AccountRole.USER)
+                            .accountStatus(AccountStatus.ACTIVE)
+                            .email("testingPurposeOnly@gmail.com")
+                            .displayName("Test User")
+                            .build()
+            );
+        }
+        if (accountRepository.findByAccountRole(AccountRole.ADMIN) == null)
+        {
+            accountRepository.save(
+                    AccountEntity.builder()
+                            .username("admin")
+                            .passwordHash(new BCryptPasswordEncoder(12).encode("123456"))
+                            .accountRole(AccountRole.ADMIN)
+                            .accountStatus(AccountStatus.ACTIVE)
+                            .email("testing@gmail.com")
+                            .displayName("Admin")
+                            .build());
+            log.info("Admin account created successfully");
+        }
+        else {
+            log.info("Admin account already exists");
+        }
+
     }
 }
