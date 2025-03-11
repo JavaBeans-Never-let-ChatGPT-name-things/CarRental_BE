@@ -51,11 +51,11 @@ public class AccountEntity extends AbstractAuditing<Long>{
 
     @Column(name = "status")
     @Enumerated(EnumType.STRING)
-    AccountStatus accountStatus = AccountStatus.ACTIVE;
+    AccountStatus accountStatus;
 
     @Column(name = "role")
     @Enumerated(EnumType.STRING)
-    AccountRole accountRole = AccountRole.USER;
+    AccountRole accountRole;
 
     @OneToMany(mappedBy = "account",
             cascade = CascadeType.ALL,
