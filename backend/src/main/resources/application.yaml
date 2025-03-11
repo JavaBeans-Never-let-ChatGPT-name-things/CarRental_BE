@@ -3,3 +3,8 @@ spring:
     url: jdbc:mysql://localhost:5431/carRental
     username: user
     password: 123456
+  jpa:
+    generate-ddl: true
+server:
+  servlet:
+    context-path: /api
