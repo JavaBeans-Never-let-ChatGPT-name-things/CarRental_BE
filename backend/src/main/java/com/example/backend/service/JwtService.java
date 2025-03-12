@@ -2,10 +2,11 @@ package com.example.backend.service;
 
 import com.example.backend.entity.AccountEntity;
 import io.jsonwebtoken.Claims;
+import io.jsonwebtoken.JwtException;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.io.Decoders;
 import io.jsonwebtoken.security.Keys;
-import org.springframework.security.core.userdetails.UserDetails;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import javax.crypto.KeyGenerator;
@@ -16,6 +17,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.function.Function;
 
+@Slf4j
 @Service
 public class JwtService {
     private final String secretKey;
@@ -32,12 +34,11 @@ public class JwtService {
 
     public String generateToken(AccountEntity account) {
         Map<String, Object> claims = new HashMap<>();
-        claims.put("role", account.getAccountRole());
         return Jwts.builder()
-                .claims().add(claims)
                 .subject(account.getUsername())
                 .issuedAt(new Date(System.currentTimeMillis()))
-                .expiration(new Date(System.currentTimeMillis() + 60 * 60 * 10))
+                .expiration(new Date(System.currentTimeMillis() + 10 * 60 * 1000))
+                .claims().add(claims)
                 .and()
                 .signWith(getKey())
                 .compact();
@@ -64,13 +65,22 @@ public class JwtService {
                 .parseSignedClaims(token)
                 .getPayload();
     }
-    public boolean validateToken(String token, UserDetails userDetails) {
-        return true;
+    public boolean validateToken(String token) {
+        try {
+            Claims claims = extractAllClaims(token);
+            if (claims == null) {
+                return false;
+            }
+            return !isTokenExpired(token);
+        } catch (JwtException | IllegalArgumentException e) {
+            log.error("{}", e.getMessage());
+            return false;
+        }
     }
     private boolean isTokenExpired(String token){
         return extractExpiration(token).before(new Date());
     }
     private Date extractExpiration(String token){
-        return extractClaim(token, Claims::getExpiration);
+            return extractClaim(token, Claims::getExpiration);
     }
 }

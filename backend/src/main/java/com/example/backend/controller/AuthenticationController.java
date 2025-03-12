@@ -10,12 +10,12 @@ import org.springframework.web.bind.annotation.RestController;
 
 @RestController
 @RequiredArgsConstructor
-@RequestMapping("/account")
-public class AccountController {
+@RequestMapping("/auth")
+public class AuthenticationController {
     private final AccountService accountService;
     @PostMapping("/login")
     public String login(@RequestBody LoginRequest request)
     {
-        return accountService.verify(request.getUsername(), request.getPassword());
+        return accountService.verify(request.username(), request.password());
     }
 }
