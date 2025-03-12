@@ -2,7 +2,6 @@ package com.example.backend.init;
 
 import com.example.backend.entity.AccountEntity;
 import com.example.backend.entity.enums.AccountRole;
-import com.example.backend.entity.enums.AccountStatus;
 import com.example.backend.repository.AccountRepository;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
@@ -31,7 +30,7 @@ public class AccountInit implements CommandLineRunner {
                             .username("test")
                             .passwordHash(new BCryptPasswordEncoder(12).encode("123456"))
                             .accountRole(AccountRole.USER)
-                            .accountStatus(AccountStatus.ACTIVE)
+                            .enabled(true)
                             .email("testingPurposeOnly@gmail.com")
                             .displayName("Test User")
                             .build()
@@ -44,7 +43,7 @@ public class AccountInit implements CommandLineRunner {
                             .username("admin")
                             .passwordHash(new BCryptPasswordEncoder(12).encode("123456"))
                             .accountRole(AccountRole.ADMIN)
-                            .accountStatus(AccountStatus.ACTIVE)
+                            .enabled(true)
                             .email("testing@gmail.com")
                             .displayName("Admin")
                             .build());

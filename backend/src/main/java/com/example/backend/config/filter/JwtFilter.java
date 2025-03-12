@@ -1,6 +1,6 @@
 package com.example.backend.config.filter;
 
-import com.example.backend.service.AuthenticationService;
+import com.example.backend.service.CustomUserDetailsService;
 import com.example.backend.service.JwtService;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
@@ -37,7 +37,14 @@ public class JwtFilter extends OncePerRequestFilter {
         {
             if (jwtService.validateToken(token)) {
                 String userName = jwtService.extractUserName(token);
-                UserDetails userDetails = context.getBean(AuthenticationService.class).loadUserByUsername(userName);
+                UserDetails userDetails = context.getBean(CustomUserDetailsService.class).loadUserByUsername(userName);
+                if (!userDetails.isEnabled())
+                {
+                    log.warn("User {} is disabled. Rejecting authentication.", userDetails.getUsername());
+                    response.setStatus(HttpServletResponse.SC_FORBIDDEN);
+                    response.getWriter().write("Account is disabled.");
+                    return;
+                }
                 log.info("User {} has authorities: {}", userDetails.getUsername(), userDetails.getAuthorities());
 
                 UsernamePasswordAuthenticationToken authToken

@@ -1,11 +1,11 @@
 package com.example.backend.entity;
 
 import com.example.backend.entity.enums.AccountRole;
-import com.example.backend.entity.enums.AccountStatus;
 import jakarta.persistence.*;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
 
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -50,12 +50,17 @@ public class AccountEntity extends AbstractAuditing<Long>{
     String avatarUrl;
 
     @Column(name = "status")
-    @Enumerated(EnumType.STRING)
-    AccountStatus accountStatus;
+    boolean enabled;
 
     @Column(name = "role")
     @Enumerated(EnumType.STRING)
     AccountRole accountRole;
+
+    @Column(name = "verification_code")
+    private String verificationCode;
+
+    @Column(name = "verification_expiration")
+    private LocalDateTime verificationCodeExpiresAt;
 
     @OneToMany(mappedBy = "account",
             cascade = CascadeType.ALL,

@@ -28,4 +28,8 @@ public class AccountPrincipal implements UserDetails {
     public String getUsername() {
         return accountEntity.getUsername();
     }
+    @Override
+    public boolean isEnabled() {
+        return accountEntity.isEnabled();
+    }
 }
