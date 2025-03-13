@@ -36,7 +36,10 @@ public class SecurityConfig {
             "/auth/login",
             "/auth/register",
             "/auth/verify",
-            "/auth/resend"
+            "/auth/resend",
+            "/auth/forgot",
+            "/auth/reset",
+            "auth/resendForgot"
     };
 
     @Bean

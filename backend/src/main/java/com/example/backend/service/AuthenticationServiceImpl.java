@@ -3,7 +3,8 @@ package com.example.backend.service;
 import com.example.backend.entity.AccountEntity;
 import com.example.backend.entity.enums.AccountRole;
 import com.example.backend.repository.AccountRepository;
-import com.example.backend.service.dto.VerifyUserDTO;
+import com.example.backend.service.dto.request.ForgotPasswordRequest;
+import com.example.backend.service.dto.request.VerifyUserDTO;
 import com.example.backend.service.dto.request.RegisterRequest;
 import com.example.backend.service.mapper.AccountRegisterMapper;
 import jakarta.mail.MessagingException;
@@ -52,7 +53,7 @@ public class AuthenticationServiceImpl implements AuthenticationService {
         account.setEnabled(false);
         account.setDisplayName(request.getDisplayName());
         account.setAccountRole(AccountRole.USER);
-        sendVerificationEmail(account);
+        sendVerificationEmail(account, "Account Verification");
         return accountRepository.save(account);
     }
 
@@ -89,7 +90,7 @@ public class AuthenticationServiceImpl implements AuthenticationService {
             }
             account.setVerificationCode(generateVerificationCode());
             account.setVerificationCodeExpiresAt(LocalDateTime.now().plusMinutes(15));
-            sendVerificationEmail(account);
+            sendVerificationEmail(account, "Resend Verification Code");
             accountRepository.save(account);
         }
         else
@@ -98,8 +99,66 @@ public class AuthenticationServiceImpl implements AuthenticationService {
         }
     }
 
-    public void sendVerificationEmail(AccountEntity account) {
-        String subject = "Account Verification";
+    @Override
+    public void sendForgotPasswordEmail(String email) {
+        AccountEntity account = accountRepository.findByEmail(email);
+        if (account != null)
+        {
+            if (!account.isEnabled())
+            {
+                throw new RuntimeException("Account is not verified");
+            }
+            account.setVerificationCode(generateVerificationCode());
+            account.setVerificationCodeExpiresAt(LocalDateTime.now().plusMinutes(15));
+            sendVerificationEmail(account, "Forgot Password");
+            accountRepository.save(account);
+        }
+        else
+        {
+            throw new RuntimeException("Account not found");
+        }
+    }
+
+    @Override
+    public void resetPassword(ForgotPasswordRequest request) {
+        AccountEntity account = accountRepository.findByEmail(request.email());
+        if (account != null)
+        {
+            if (account.getVerificationCodeExpiresAt().isBefore(LocalDateTime.now()))
+            {
+                throw new RuntimeException("Verification code has expired");
+            }
+            if (account.getVerificationCode().equals(request.verificationCode()))
+            {
+                account.setPasswordHash(passwordEncoder.encode(request.newPassword()));
+                account.setVerificationCode(null);
+                account.setVerificationCodeExpiresAt(null);
+                accountRepository.save(account);
+            }
+        }
+        else
+        {
+            throw new RuntimeException("Account not found");
+        }
+    }
+
+    @Override
+    public void resendForgotPasswordEmail(String email) {
+        AccountEntity account = accountRepository.findByEmail(email);
+        if (account != null)
+        {
+            account.setVerificationCode(generateVerificationCode());
+            account.setVerificationCodeExpiresAt(LocalDateTime.now().plusMinutes(15));
+            sendVerificationEmail(account, "Resend Forgot Password");
+            accountRepository.save(account);
+        }
+        else
+        {
+            throw new RuntimeException("Account not found");
+        }
+    }
+
+    public void sendVerificationEmail(AccountEntity account, String title) {
         String verificationCode = account.getVerificationCode();
         String htmlMessage = "<html>"
                 + "<body style=\"font-family: Arial, sans-serif;\">"
@@ -114,7 +173,7 @@ public class AuthenticationServiceImpl implements AuthenticationService {
                 + "</body>"
                 + "</html>";
         try{
-            emailService.sendVerificationEmail(account.getEmail(), subject, htmlMessage);
+            emailService.sendVerificationEmail(account.getEmail(), title, htmlMessage);
         }
         catch (MessagingException e)
         {
