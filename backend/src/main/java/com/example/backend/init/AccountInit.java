@@ -36,7 +36,7 @@ public class AccountInit implements CommandLineRunner {
                             .build()
             );
         }
-        if (accountRepository.findByAccountRole(AccountRole.ADMIN) == null)
+        if (accountRepository.findByAccountRole(AccountRole.ADMIN).isEmpty())
         {
             accountRepository.save(
                     AccountEntity.builder()

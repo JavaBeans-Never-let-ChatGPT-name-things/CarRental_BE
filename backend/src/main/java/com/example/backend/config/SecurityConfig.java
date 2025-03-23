@@ -33,13 +33,8 @@ public class SecurityConfig {
     private final JwtFilter jwtFilter;
     private final CustomUserDetailsService customUserDetailsService;
     private final String[] PUBLIC_ENDPOINTS = {
-            "/auth/login",
-            "/auth/register",
-            "/auth/verify",
-            "/auth/resend",
-            "/auth/forgot",
-            "/auth/reset",
-            "auth/resendForgot"
+            "/auth/**",
+            "/cars/**"
     };
 
     @Bean

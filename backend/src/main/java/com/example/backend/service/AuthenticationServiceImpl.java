@@ -6,8 +6,11 @@ import com.example.backend.repository.AccountRepository;
 import com.example.backend.service.dto.request.ForgotPasswordRequest;
 import com.example.backend.service.dto.request.VerifyUserDTO;
 import com.example.backend.service.dto.request.RegisterRequest;
+import com.example.backend.service.dto.response.TokenResponse;
 import com.example.backend.service.mapper.AccountRegisterMapper;
 import jakarta.mail.MessagingException;
+import jakarta.validation.ConstraintViolation;
+import jakarta.validation.Validator;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -16,22 +19,29 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
+import java.util.Optional;
 import java.util.Random;
+import java.util.Set;
 
 @Service
 @RequiredArgsConstructor
 public class AuthenticationServiceImpl implements AuthenticationService {
     private final AccountRepository accountRepository;
     private final BCryptPasswordEncoder passwordEncoder = new BCryptPasswordEncoder(12);
-
+    private final Validator validator;
     private final AccountRegisterMapper accountMapper;
     private final AuthenticationManager authenticationManager;
     private final JwtService jwtService;
     private final EmailService emailService;
 
     @Override
-    public String verify(String username, String password) {
-        AccountEntity account = accountRepository.findByUsername(username);
+    public TokenResponse verify(String username, String password) {
+        Optional<AccountEntity> accountOpt = accountRepository.findByUsername(username);
+        if (accountOpt.isEmpty())
+        {
+            throw new RuntimeException("Account not found");
+        }
+        AccountEntity account = accountOpt.get();
         if (!account.isEnabled())
         {
             throw new RuntimeException("Account is not enabled");
@@ -39,13 +49,29 @@ public class AuthenticationServiceImpl implements AuthenticationService {
         Authentication authentication =
                 authenticationManager.authenticate(new UsernamePasswordAuthenticationToken(username, password));
         if (authentication.isAuthenticated())
-            return jwtService.generateToken(account);
+            return TokenResponse.builder()
+                    .role(account.getAccountRole())
+                    .token(jwtService.generateToken(account))
+                    .build();
         else
-            return "Account is not authenticated";
+            return TokenResponse.builder()
+                    .token("Failed to authenticate")
+                    .role(null)
+                    .build();
     }
 
     @Override
-    public AccountEntity register(RegisterRequest request) {
+    public RegisterRequest register(RegisterRequest request) {
+        String mail = request.getEmail();
+        String username = request.getUsername();
+        Set<ConstraintViolation<RegisterRequest>> violations = validator.validate(request);
+        if (!violations.isEmpty()) {
+            throw new RuntimeException(violations.iterator().next().getMessage());
+        }
+        if (accountRepository.findByUsername(username).isPresent() || accountRepository.findByEmail(mail).isPresent())
+        {
+            throw new RuntimeException("Account already exists");
+        }
         AccountEntity account = accountMapper.toEntity(request);
         account.setVerificationCode(generateVerificationCode());
         account.setPasswordHash(passwordEncoder.encode(request.getPassword()));
@@ -54,14 +80,16 @@ public class AuthenticationServiceImpl implements AuthenticationService {
         account.setDisplayName(request.getDisplayName());
         account.setAccountRole(AccountRole.USER);
         sendVerificationEmail(account, "Account Verification");
-        return accountRepository.save(account);
+        accountRepository.save(account);
+        return request;
     }
 
     @Override
-    public void verifyUser(VerifyUserDTO input) {
-        AccountEntity account = accountRepository.findByEmail(input.email());
-        if (account != null)
+    public TokenResponse verifyUser(VerifyUserDTO input) {
+        Optional<AccountEntity> accountOpt = accountRepository.findByEmail(input.email());
+        if (accountOpt.isPresent())
         {
+            AccountEntity account = accountOpt.get();
             if (account.getVerificationCodeExpiresAt().isBefore(LocalDateTime.now()))
             {
                 throw new RuntimeException("Verification code has expired");
@@ -71,19 +99,25 @@ public class AuthenticationServiceImpl implements AuthenticationService {
                 account.setVerificationCode(null);
                 account.setVerificationCodeExpiresAt(null);
                 accountRepository.save(account);
+
             }
         }
         else
         {
             throw new RuntimeException("Account not found");
         }
+        return TokenResponse.builder()
+                .role(accountOpt.get().getAccountRole())
+                .token(jwtService.generateToken(accountOpt.get()))
+                .build();
     }
 
     @Override
     public void resendVerificationCode(String email){
-        AccountEntity account = accountRepository.findByEmail(email);
-        if (account != null)
+        Optional<AccountEntity> accountOpt = accountRepository.findByEmail(email);
+        if (accountOpt.isPresent())
         {
+            AccountEntity account = accountOpt.get();
             if (account.isEnabled())
             {
                 throw new RuntimeException("Account is already verified");
@@ -101,9 +135,10 @@ public class AuthenticationServiceImpl implements AuthenticationService {
 
     @Override
     public void sendForgotPasswordEmail(String email) {
-        AccountEntity account = accountRepository.findByEmail(email);
-        if (account != null)
+        Optional<AccountEntity> accountOpt = accountRepository.findByEmail(email);
+        if (accountOpt.isPresent())
         {
+            AccountEntity account = accountOpt.get();
             if (!account.isEnabled())
             {
                 throw new RuntimeException("Account is not verified");
@@ -121,9 +156,10 @@ public class AuthenticationServiceImpl implements AuthenticationService {
 
     @Override
     public void resetPassword(ForgotPasswordRequest request) {
-        AccountEntity account = accountRepository.findByEmail(request.email());
-        if (account != null)
+        Optional<AccountEntity> accountOpt = accountRepository.findByEmail(request.email());
+        if (accountOpt.isPresent())
         {
+            AccountEntity account = accountOpt.get();
             if (account.getVerificationCodeExpiresAt().isBefore(LocalDateTime.now()))
             {
                 throw new RuntimeException("Verification code has expired");
@@ -144,9 +180,10 @@ public class AuthenticationServiceImpl implements AuthenticationService {
 
     @Override
     public void resendForgotPasswordEmail(String email) {
-        AccountEntity account = accountRepository.findByEmail(email);
-        if (account != null)
+        Optional<AccountEntity> accountOpt = accountRepository.findByEmail(email);
+        if (accountOpt.isPresent())
         {
+            AccountEntity account = accountOpt.get();
             account.setVerificationCode(generateVerificationCode());
             account.setVerificationCodeExpiresAt(LocalDateTime.now().plusMinutes(15));
             sendVerificationEmail(account, "Resend Forgot Password");
@@ -177,7 +214,7 @@ public class AuthenticationServiceImpl implements AuthenticationService {
         }
         catch (MessagingException e)
         {
-           e.printStackTrace();
+           throw new RuntimeException("Failed to send email due to " + e.getCause());
         }
     }
     private String generateVerificationCode(){
