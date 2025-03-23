@@ -7,11 +7,10 @@ import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.io.Decoders;
 import io.jsonwebtoken.security.Keys;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
-import javax.crypto.KeyGenerator;
 import javax.crypto.SecretKey;
-import java.util.Base64;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
@@ -20,24 +19,32 @@ import java.util.function.Function;
 @Slf4j
 @Service
 public class JwtService {
-    private final String secretKey;
-
-    public JwtService() {
-        try {
-            KeyGenerator keyGen = KeyGenerator.getInstance("HmacSHA256");
-            SecretKey sk = keyGen.generateKey();
-            secretKey = Base64.getEncoder().encodeToString(sk.getEncoded());
-        } catch (Exception e) {
-            throw new RuntimeException(e);
-        }
-    }
-
-    public String generateToken(AccountEntity account) {
+    @Value("${secret.secret-key}")
+    private String secretKey;
+    @Value("${secret.access-token-expiration}")
+    private long ACCESS_TOKEN_EXPIRATION;
+    @Value("${secret.refresh-token-expiration}")
+    private long REFRESH_TOKEN_EXPIRATION;
+    public String generateAccessToken (AccountEntity account)
+    {
         Map<String, Object> claims = new HashMap<>();
+        claims.put("type", "access");
         return Jwts.builder()
                 .subject(account.getUsername())
                 .issuedAt(new Date(System.currentTimeMillis()))
-                .expiration(new Date(System.currentTimeMillis() + 10 * 60 * 1000))
+                .expiration(new Date(System.currentTimeMillis() + ACCESS_TOKEN_EXPIRATION))
+                .claims().add(claims)
+                .and()
+                .signWith(getKey())
+                .compact();
+    }
+    public String generateRefreshToken(AccountEntity account) {
+        Map<String, Object> claims = new HashMap<>();
+        claims.put("type", "refresh");
+        return Jwts.builder()
+                .subject(account.getUsername())
+                .issuedAt(new Date(System.currentTimeMillis()))
+                .expiration(new Date(System.currentTimeMillis() + REFRESH_TOKEN_EXPIRATION))
                 .claims().add(claims)
                 .and()
                 .signWith(getKey())
@@ -65,20 +72,34 @@ public class JwtService {
                 .parseSignedClaims(token)
                 .getPayload();
     }
-    public boolean validateToken(String token) {
+    public boolean validateAccessToken(String token) {
         try {
             Claims claims = extractAllClaims(token);
             if (claims == null) {
                 return false;
             }
-            return !isTokenExpired(token);
+            String type = claims.get("type", String.class);
+            return isTokenNotExpired(token) && type.equals("access");
         } catch (JwtException | IllegalArgumentException e) {
             log.error("{}", e.getMessage());
             return false;
         }
     }
-    private boolean isTokenExpired(String token){
-        return extractExpiration(token).before(new Date());
+    public boolean validateRefreshToken(String token) {
+        try {
+            Claims claims = extractAllClaims(token);
+            if (claims == null) {
+                return false;
+            }
+            String type = claims.get("type", String.class);
+            return (isTokenNotExpired(token)) && type.equals("refresh");
+        } catch (JwtException | IllegalArgumentException e) {
+            log.error("{}", e.getMessage());
+            return false;
+        }
+    }
+    private boolean isTokenNotExpired(String token){
+        return !extractExpiration(token).before(new Date());
     }
     private Date extractExpiration(String token){
             return extractClaim(token, Claims::getExpiration);

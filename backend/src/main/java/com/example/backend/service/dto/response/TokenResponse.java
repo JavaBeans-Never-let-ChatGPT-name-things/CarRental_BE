@@ -5,5 +5,5 @@ import com.example.backend.entity.enums.AccountRole;
 import lombok.*;
 
 @Builder
-public record TokenResponse(String token, AccountRole role) {
+public record TokenResponse(String accessToken, String refreshToken, AccountRole role) {
 }

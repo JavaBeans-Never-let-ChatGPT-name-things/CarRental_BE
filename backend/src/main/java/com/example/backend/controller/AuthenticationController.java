@@ -6,16 +6,12 @@ import com.example.backend.service.dto.request.VerifyUserDTO;
 import com.example.backend.service.dto.request.LoginRequest;
 import com.example.backend.service.dto.request.RegisterRequest;
 import com.example.backend.service.dto.response.TokenResponse;
-import com.example.backend.service.mapper.AccountMapper;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequiredArgsConstructor
@@ -23,7 +19,6 @@ import org.springframework.web.bind.annotation.RestController;
 @Slf4j
 public class AuthenticationController {
     private final AuthenticationService authenticationService;
-    private final AccountMapper accountMapper;
     @PostMapping("/login")
     public ResponseEntity<TokenResponse> login(@RequestBody LoginRequest request)
     {
@@ -34,7 +29,8 @@ public class AuthenticationController {
         catch (Exception e)
         {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(TokenResponse.builder()
-                    .token(null)
+                    .accessToken(null)
+                    .refreshToken(null)
                     .role(null)
                     .build());
         }
@@ -62,7 +58,8 @@ public class AuthenticationController {
         catch (Exception e)
         {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(TokenResponse.builder()
-                    .token(null)
+                    .accessToken(null)
+                    .refreshToken(null)
                     .role(null)
                     .build());
         }
@@ -119,11 +116,33 @@ public class AuthenticationController {
         }
         return "Forgot password email resent";
     }
-    @RequestMapping("/logout")
+    @GetMapping("/logout")
     public String logout(HttpServletRequest request)
     {
-        String token = request.getHeader("Authorization").substring(7);
-        authenticationService.logout(token);
-        return "User has logged out";
+        try
+        {
+            String token = request.getHeader("Authorization").substring(7);
+            authenticationService.logout(token);
+            return "User has logged out";
+        }
+        catch (Exception e)
+        {
+            return "Invalid token";
+        }
+    }
+
+    @GetMapping("/refresh")
+    public ResponseEntity<?> refresh(HttpServletRequest request)
+    {
+        try{
+            String refreshToken = request.getHeader("Authorization").substring(7);
+            return ResponseEntity.ok(authenticationService.refreshAccessToken(refreshToken));
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(TokenResponse.builder()
+                    .accessToken(null)
+                    .refreshToken(null)
+                    .role(null)
+                    .build());
+        }
     }
 }

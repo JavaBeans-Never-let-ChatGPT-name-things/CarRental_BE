@@ -8,6 +8,11 @@ spring:
   mail:
     username: ${MAIL_USERNAME}
     password: ${MAIL_PASSWORD}
+
+secret:
+  secret-key: ${SECRET_JWT_KEY}
+  access-token-expiration: 900000
+  refresh-token-expiration: 864000000
 server:
   servlet:
     context-path: /api

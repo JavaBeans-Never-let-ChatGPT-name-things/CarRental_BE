@@ -56,11 +56,13 @@ public class AuthenticationServiceImpl implements AuthenticationService {
         if (authentication.isAuthenticated())
             return TokenResponse.builder()
                     .role(account.getAccountRole())
-                    .token(jwtService.generateToken(account))
+                    .accessToken(jwtService.generateAccessToken(account))
+                    .refreshToken(jwtService.generateRefreshToken(account))
                     .build();
         else
             return TokenResponse.builder()
-                    .token("Failed to authenticate")
+                    .accessToken(null)
+                    .refreshToken(null)
                     .role(null)
                     .build();
     }
@@ -113,7 +115,8 @@ public class AuthenticationServiceImpl implements AuthenticationService {
         }
         return TokenResponse.builder()
                 .role(accountOpt.get().getAccountRole())
-                .token(jwtService.generateToken(accountOpt.get()))
+                .accessToken(jwtService.generateAccessToken(accountOpt.get()))
+                .refreshToken(jwtService.generateRefreshToken(accountOpt.get()))
                 .build();
     }
 
@@ -202,7 +205,46 @@ public class AuthenticationServiceImpl implements AuthenticationService {
 
     @Override
     public void logout(String token) {
-        logoutTokenRepository.save(LogoutToken.builder().token(token).build());
+        if (jwtService.validateRefreshToken(token))
+        {
+            logoutTokenRepository.save(LogoutToken.builder().token(token).build());
+        }
+        else
+        {
+            throw new RuntimeException("Invalid token");
+        }
+    }
+
+    @Override
+    public TokenResponse refreshAccessToken(String refreshToken) {
+        if (jwtService.validateRefreshToken(refreshToken) && logoutTokenRepository.findByToken(refreshToken).isEmpty())
+        {
+            String username = jwtService.extractUserName(refreshToken);
+            Optional<AccountEntity> accountOpt = accountRepository.findByUsername(username);
+            if (accountOpt.isPresent())
+            {
+                AccountEntity account = accountOpt.get();
+                if (account.isEnabled())
+                {
+                    return TokenResponse.builder()
+                            .role(account.getAccountRole())
+                            .accessToken(jwtService.generateAccessToken(account))
+                            .build();
+                }
+                else
+                {
+                    throw new RuntimeException("Account is not verified");
+                }
+            }
+            else
+            {
+                throw new RuntimeException("Account not found");
+            }
+        }
+        else
+        {
+            throw new RuntimeException("Invalid token");
+        }
     }
 
     public void sendVerificationEmail(AccountEntity account, String title) {

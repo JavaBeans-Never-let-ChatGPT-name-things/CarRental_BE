@@ -26,7 +26,6 @@ import java.io.IOException;
 public class JwtFilter extends OncePerRequestFilter {
     private final JwtService jwtService;
     private final ApplicationContext context;
-    private final LogoutTokenRepository logoutTokenRepository;
     @Override
     protected void doFilterInternal(HttpServletRequest request, @NonNull HttpServletResponse response, @NonNull FilterChain filterChain) throws ServletException, IOException {
         String authHeader = request.getHeader("Authorization");
@@ -34,15 +33,9 @@ public class JwtFilter extends OncePerRequestFilter {
         if (authHeader != null && authHeader.startsWith("Bearer ")){
             token = authHeader.substring(7);
         }
-        if (logoutTokenRepository.findByToken(token).isPresent())
-        {
-            response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
-            response.getWriter().write("User has logged out.");
-            return;
-        }
         if (token!= null && SecurityContextHolder.getContext().getAuthentication() == null)
         {
-            if (jwtService.validateToken(token)) {
+            if (jwtService.validateAccessToken(token)) {
                 String userName = jwtService.extractUserName(token);
                 UserDetails userDetails = context.getBean(CustomUserDetailsService.class).loadUserByUsername(userName);
                 if (!userDetails.isEnabled())
