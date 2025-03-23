@@ -1,8 +1,10 @@
 package com.example.backend.service;
 
 import com.example.backend.entity.AccountEntity;
+import com.example.backend.entity.LogoutToken;
 import com.example.backend.entity.enums.AccountRole;
 import com.example.backend.repository.AccountRepository;
+import com.example.backend.repository.LogoutTokenRepository;
 import com.example.backend.service.dto.request.ForgotPasswordRequest;
 import com.example.backend.service.dto.request.VerifyUserDTO;
 import com.example.backend.service.dto.request.RegisterRequest;
@@ -11,7 +13,9 @@ import com.example.backend.service.mapper.AccountRegisterMapper;
 import jakarta.mail.MessagingException;
 import jakarta.validation.ConstraintViolation;
 import jakarta.validation.Validator;
+import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
+import lombok.experimental.FieldDefaults;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
@@ -25,15 +29,16 @@ import java.util.Set;
 
 @Service
 @RequiredArgsConstructor
+@FieldDefaults(makeFinal = true, level = AccessLevel.PRIVATE)
 public class AuthenticationServiceImpl implements AuthenticationService {
-    private final AccountRepository accountRepository;
-    private final BCryptPasswordEncoder passwordEncoder = new BCryptPasswordEncoder(12);
-    private final Validator validator;
-    private final AccountRegisterMapper accountMapper;
-    private final AuthenticationManager authenticationManager;
-    private final JwtService jwtService;
-    private final EmailService emailService;
-
+    AccountRepository accountRepository;
+    BCryptPasswordEncoder passwordEncoder = new BCryptPasswordEncoder(12);
+    Validator validator;
+    AccountRegisterMapper accountMapper;
+    AuthenticationManager authenticationManager;
+    JwtService jwtService;
+    EmailService emailService;
+    LogoutTokenRepository logoutTokenRepository;
     @Override
     public TokenResponse verify(String username, String password) {
         Optional<AccountEntity> accountOpt = accountRepository.findByUsername(username);
@@ -193,6 +198,11 @@ public class AuthenticationServiceImpl implements AuthenticationService {
         {
             throw new RuntimeException("Account not found");
         }
+    }
+
+    @Override
+    public void logout(String token) {
+        logoutTokenRepository.save(LogoutToken.builder().token(token).build());
     }
 
     public void sendVerificationEmail(AccountEntity account, String title) {

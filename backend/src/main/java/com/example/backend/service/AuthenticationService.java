@@ -14,4 +14,5 @@ public interface AuthenticationService {
     void sendForgotPasswordEmail(String email);
     void resetPassword(ForgotPasswordRequest request);
     void resendForgotPasswordEmail(String email);
+    void logout(String token);
 }

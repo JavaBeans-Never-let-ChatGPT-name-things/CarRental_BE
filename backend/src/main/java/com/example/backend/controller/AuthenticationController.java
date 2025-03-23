@@ -7,6 +7,7 @@ import com.example.backend.service.dto.request.LoginRequest;
 import com.example.backend.service.dto.request.RegisterRequest;
 import com.example.backend.service.dto.response.TokenResponse;
 import com.example.backend.service.mapper.AccountMapper;
+import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
@@ -118,5 +119,11 @@ public class AuthenticationController {
         }
         return "Forgot password email resent";
     }
-
+    @RequestMapping("/logout")
+    public String logout(HttpServletRequest request)
+    {
+        String token = request.getHeader("Authorization").substring(7);
+        authenticationService.logout(token);
+        return "User has logged out";
+    }
 }

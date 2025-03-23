@@ -1,5 +1,6 @@
 package com.example.backend.config.filter;
 
+import com.example.backend.repository.LogoutTokenRepository;
 import com.example.backend.service.CustomUserDetailsService;
 import com.example.backend.service.JwtService;
 import jakarta.servlet.FilterChain;
@@ -25,13 +26,19 @@ import java.io.IOException;
 public class JwtFilter extends OncePerRequestFilter {
     private final JwtService jwtService;
     private final ApplicationContext context;
+    private final LogoutTokenRepository logoutTokenRepository;
     @Override
     protected void doFilterInternal(HttpServletRequest request, @NonNull HttpServletResponse response, @NonNull FilterChain filterChain) throws ServletException, IOException {
         String authHeader = request.getHeader("Authorization");
         String token = null;
         if (authHeader != null && authHeader.startsWith("Bearer ")){
             token = authHeader.substring(7);
-
+        }
+        if (logoutTokenRepository.findByToken(token).isPresent())
+        {
+            response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+            response.getWriter().write("User has logged out.");
+            return;
         }
         if (token!= null && SecurityContextHolder.getContext().getAuthentication() == null)
         {
