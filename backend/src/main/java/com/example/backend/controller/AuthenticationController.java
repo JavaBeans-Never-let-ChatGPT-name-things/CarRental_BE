@@ -1,12 +1,10 @@
 package com.example.backend.controller;
 
 import com.example.backend.service.AuthenticationService;
-import com.example.backend.service.dto.request.ForgotPasswordRequest;
-import com.example.backend.service.dto.request.VerifyUserDTO;
-import com.example.backend.service.dto.request.LoginRequest;
-import com.example.backend.service.dto.request.RegisterRequest;
+import com.example.backend.service.dto.request.*;
 import com.example.backend.service.dto.response.TokenResponse;
 import jakarta.servlet.http.HttpServletRequest;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
@@ -66,10 +64,10 @@ public class AuthenticationController {
     }
 
     @PostMapping("/resend")
-    public String resend(@RequestBody String email)
+    public String resend(@Valid @RequestBody EmailRequest email)
     {
         try{
-            authenticationService.resendVerificationCode(email);
+            authenticationService.resendVerificationCode(email.getEmail());
         }
         catch (Exception e)
         {
@@ -79,10 +77,10 @@ public class AuthenticationController {
     }
 
     @PostMapping("/forgot")
-    public String forgot(@RequestBody String email)
+    public String forgot(@Valid @RequestBody EmailRequest email)
     {
         try{
-            authenticationService.sendForgotPasswordEmail(email);
+            authenticationService.sendForgotPasswordEmail(email.getEmail());
         }
         catch (Exception e)
         {
@@ -105,10 +103,10 @@ public class AuthenticationController {
     }
 
     @PostMapping("/resendForgot")
-    public String resendForgot(@RequestBody String email)
+    public String resendForgot(@Valid @RequestBody EmailRequest email)
     {
         try{
-            authenticationService.resendForgotPasswordEmail(email);
+            authenticationService.resendForgotPasswordEmail(email.getEmail());
         }
         catch (Exception e)
         {

@@ -34,7 +34,11 @@ public class SecurityConfig {
     private final CustomUserDetailsService customUserDetailsService;
     private final String[] PUBLIC_ENDPOINTS = {
             "/auth/**",
-            "/cars/**"
+            "/swagger-ui/index.html#/",
+            "/swagger-ui/**",
+            "/v3/api-docs/**",
+            "/swagger-ui.html",
+            "/webjars/**"
     };
 
     @Bean
