@@ -11,6 +11,8 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.Map;
+
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/auth")
@@ -39,11 +41,12 @@ public class AuthenticationController {
     {
         try
         {
-            return ResponseEntity.ok(authenticationService.register(request));
+            ResponseEntity.ok(authenticationService.register(request));
+            return ResponseEntity.ok().body(Map.of("message", "User registered successfully"));
         }
         catch (Exception e)
         {
-            return ResponseEntity.badRequest().body("Failed to register due to " + e.getMessage());
+            return ResponseEntity.badRequest().body(Map.of("message", "Failed to register due to"  + e.getMessage()));
         }
     }
 
@@ -64,68 +67,69 @@ public class AuthenticationController {
     }
 
     @PostMapping("/resend")
-    public String resend(@Valid @RequestBody EmailRequest email)
+    public ResponseEntity<?> resend(@Valid @RequestBody EmailRequest email)
     {
         try{
             authenticationService.resendVerificationCode(email.getEmail());
         }
         catch (Exception e)
         {
-            return e.getMessage();
+            return ResponseEntity.badRequest().body(Map.of("message",e.getMessage()));
         }
-        return "Verification code resent";
+        return ResponseEntity.ok(Map.of("message", "Verification code resent"));
     }
 
     @PostMapping("/forgot")
-    public String forgot(@Valid @RequestBody EmailRequest email)
+    public ResponseEntity<?> forgot(@Valid @RequestBody EmailRequest email)
     {
         try{
             authenticationService.sendForgotPasswordEmail(email.getEmail());
         }
         catch (Exception e)
         {
-            return e.getMessage();
+            return ResponseEntity.badRequest().body(Map.of("message",e.getMessage()));
         }
-        return "Forgot password email sent";
+        return ResponseEntity.ok(Map.of("message","Forgot password email sent"));
     }
 
     @PostMapping("/reset")
-    public String resetPassword(@RequestBody ForgotPasswordRequest request)
+    public ResponseEntity<?> resetPassword(@RequestBody ForgotPasswordRequest request)
     {
         try{
             authenticationService.resetPassword(request);
         }
         catch (Exception e)
         {
-            return e.getMessage();
+            return ResponseEntity.badRequest().body(Map.of("message",e.getMessage()));
         }
-        return "Password reset";
+        return ResponseEntity.ok(Map.of("message", "Password Reset"));
     }
 
     @PostMapping("/resendForgot")
-    public String resendForgot(@Valid @RequestBody EmailRequest email)
+    public ResponseEntity<?> resendForgot(@Valid @RequestBody EmailRequest email)
     {
         try{
             authenticationService.resendForgotPasswordEmail(email.getEmail());
         }
         catch (Exception e)
         {
-            return e.getMessage();
+            return ResponseEntity.badRequest().body(Map.of("message",e.getMessage()));
         }
-        return "Forgot password email resent";
+        return ResponseEntity.ok(Map.of("message", "Forgot password email resent"));
+
     }
     @GetMapping("/logout")
-    public String logout(HttpServletRequest request)
+    public ResponseEntity<?> logout(HttpServletRequest request)
     {
         try
         {
             String token = request.getHeader("Authorization").substring(7);
             authenticationService.logout(token);
-            return "User has logged out";
+            return ResponseEntity.ok(Map.of("message", "Logged out successfully"));
         }
         catch (Exception e)
         {
-            return "Invalid token";
+            return ResponseEntity.ok(Map.of("message", "Invalid Token"));
         }
     }
 
