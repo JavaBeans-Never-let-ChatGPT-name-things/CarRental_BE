@@ -7,6 +7,7 @@ import lombok.experimental.FieldDefaults;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
 
 @Setter
 @Getter
@@ -18,13 +19,20 @@ import java.util.List;
 @FieldDefaults(level = AccessLevel.PRIVATE)
 public class CarEntity extends AbstractAuditing<String> {
     @Id
-    String id;
+    String id = UUID.randomUUID().toString();
 
-    @Column(name = "car_brand", nullable = false)
-    String carBrand;
+    @ManyToOne(cascade = CascadeType.ALL, fetch = FetchType.EAGER)
+    @JoinColumn(name="brand_id", nullable = false)
+    CarBrandEntity brand;
 
     @Column(name = "max_speed", nullable = false)
     float maxSpeed;
+
+    @Column(name = "car_range", nullable = false)
+    float carRange;
+
+    @Column(name = "car_image_url", nullable = false)
+    String carImageUrl;
 
     @Column(name = "state", nullable = false)
     @Enumerated(EnumType.STRING)
@@ -36,8 +44,14 @@ public class CarEntity extends AbstractAuditing<String> {
     @Column(name = "rental_price_per_day", nullable = false)
     float rentalPrice;
 
+    @Column(name = "engine_type", nullable = false)
+    String engineType;
+
     @Column(name = "rating")
     float rating;
+
+    @Column(name = "reviews_num")
+    int reviewsNum;
 
     @OneToMany(mappedBy = "car",
             cascade = {CascadeType.DETACH, CascadeType.MERGE, CascadeType.PERSIST, CascadeType.REFRESH},

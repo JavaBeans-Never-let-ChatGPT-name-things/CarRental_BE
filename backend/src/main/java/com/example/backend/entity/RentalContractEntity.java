@@ -7,6 +7,8 @@ import lombok.*;
 import lombok.experimental.FieldDefaults;
 
 import java.time.LocalDate;
+import java.util.ArrayList;
+import java.util.List;
 
 @Getter
 @Setter
@@ -59,4 +61,13 @@ public class RentalContractEntity extends AbstractAuditing<Long> {
     @OneToOne(cascade = CascadeType.ALL)
     @JoinColumn(name = "review_id")
     ReviewEntity review;
+
+    @OneToMany(mappedBy = "contract",
+            cascade = {CascadeType.DETACH, CascadeType.MERGE, CascadeType.PERSIST, CascadeType.REFRESH},
+            fetch = FetchType.LAZY)
+    List<NotificationEntity> notifications = new ArrayList<>();
+
+    public void addNotification(NotificationEntity notification) {
+        notifications.add(notification);
+    }
 }

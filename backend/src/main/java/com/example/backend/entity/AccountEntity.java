@@ -80,8 +80,7 @@ public class AccountEntity extends AbstractAuditing<Long>{
         notifications.add(notification);
     }
 
-    @ManyToMany(cascade = CascadeType.ALL,
-                fetch = FetchType.LAZY)
+    @ManyToMany(cascade = {CascadeType.DETACH, CascadeType.MERGE, CascadeType.PERSIST, CascadeType.REFRESH})
     @JoinTable ( name = "favourite_cars",
                 joinColumns = @JoinColumn(name = "account_id"),
                 inverseJoinColumns = @JoinColumn(name = "car_id"))

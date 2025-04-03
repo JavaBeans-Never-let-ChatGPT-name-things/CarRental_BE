@@ -26,4 +26,8 @@ public class NotificationEntity extends AbstractAuditing<Long> {
     @ManyToOne
     @JoinColumn(name = "account_id", nullable = false)
     AccountEntity account_notification;
+
+    @ManyToOne
+    @JoinColumn(name = "contract_id", nullable = false)
+    RentalContractEntity contract;
 }
