@@ -1,5 +1,7 @@
 package com.example.backend.entity;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import jakarta.persistence.*;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
@@ -15,8 +17,10 @@ import java.util.List;
 @NoArgsConstructor
 @AllArgsConstructor
 @FieldDefaults(level = AccessLevel.PRIVATE)
+@JsonIgnoreProperties("cars")
 public class CarBrandEntity extends AbstractAuditing<Long>{
     @Id
+    @JsonIgnore
     @GeneratedValue(strategy = jakarta.persistence.GenerationType.IDENTITY)
     Long id;
 
@@ -28,7 +32,7 @@ public class CarBrandEntity extends AbstractAuditing<Long>{
 
     @OneToMany(mappedBy = "brand",
             cascade = {CascadeType.DETACH, CascadeType.MERGE, CascadeType.PERSIST, CascadeType.REFRESH},
-            fetch = FetchType.LAZY)
+            fetch = FetchType.EAGER)
     List<CarEntity> cars = new ArrayList<>();
 
     public void addCar(CarEntity car) {
