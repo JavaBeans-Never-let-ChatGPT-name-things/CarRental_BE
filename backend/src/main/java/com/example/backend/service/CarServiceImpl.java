@@ -1,9 +1,13 @@
 package com.example.backend.service;
 
+import com.example.backend.entity.CarEntity;
 import com.example.backend.repository.CarRepository;
 import com.example.backend.service.dto.CarDTO;
+import com.example.backend.service.dto.request.CarPageRequestDTO;
 import com.example.backend.service.mapper.CarMapper;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -15,5 +19,26 @@ public class CarServiceImpl implements CarService{
     @Override
     public List<CarDTO> findAll() {
         return carMapper.toDto(carRepository.findAll());
+    }
+
+    @Override
+    public Page<CarDTO> findByAllWithPagination(CarPageRequestDTO carPageRequestDTO) {
+        try
+        {
+            Pageable pageable = new CarPageRequestDTO().getPageable(carPageRequestDTO);
+            Page<CarEntity> carEntityPage = carRepository.findAll(pageable);
+            return carEntityPage.map(carMapper::toDto);
+        }
+        catch (RuntimeException e)
+        {
+            return Page.empty();
+        }
+    }
+
+    @Override
+    public Page<CarDTO> findByAllWithPaginationAndFilter(CarPageRequestDTO carPageRequestDTO, String id) {
+        Pageable pageable = new CarPageRequestDTO().getPageable(carPageRequestDTO);
+        Page<CarEntity> carEntityPage = carRepository.findAllById(id, pageable);
+        return carEntityPage.map(carMapper::toDto);
     }
 }
