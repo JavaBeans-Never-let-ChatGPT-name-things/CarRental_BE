@@ -20,7 +20,6 @@ import java.util.List;
 @JsonIgnoreProperties("cars")
 public class CarBrandEntity extends AbstractAuditing<Long>{
     @Id
-    @JsonIgnore
     @GeneratedValue(strategy = jakarta.persistence.GenerationType.IDENTITY)
     Long id;
 

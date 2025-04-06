@@ -22,7 +22,7 @@ public class CarServiceImpl implements CarService{
     }
 
     @Override
-    public Page<CarDTO> findByAllWithPagination(CarPageRequestDTO carPageRequestDTO) {
+    public Page<CarDTO> findAllWithPagination(CarPageRequestDTO carPageRequestDTO) {
         try
         {
             Pageable pageable = new CarPageRequestDTO().getPageable(carPageRequestDTO);
@@ -36,9 +36,16 @@ public class CarServiceImpl implements CarService{
     }
 
     @Override
-    public Page<CarDTO> findByAllWithPaginationAndFilter(CarPageRequestDTO carPageRequestDTO, String id) {
+    public Page<CarDTO> findByIdWithPaginationAndFilter(CarPageRequestDTO carPageRequestDTO, String id) {
         Pageable pageable = new CarPageRequestDTO().getPageable(carPageRequestDTO);
         Page<CarEntity> carEntityPage = carRepository.findAllById(id, pageable);
+        return carEntityPage.map(carMapper::toDto);
+    }
+
+    @Override
+    public Page<CarDTO> findByBrandIdWithPagination(CarPageRequestDTO carPageRequestDTO, Long brandId) {
+        Pageable pageable = new CarPageRequestDTO().getPageable(carPageRequestDTO);
+        Page<CarEntity> carEntityPage = carRepository.findAllByBrand(brandId, pageable);
         return carEntityPage.map(carMapper::toDto);
     }
 }

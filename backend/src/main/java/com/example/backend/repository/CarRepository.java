@@ -17,4 +17,10 @@ public interface CarRepository extends JpaRepository<CarEntity, String> {
             nativeQuery = true
     )
     Page<CarEntity> findAllById(@Param("id") String id, Pageable pageable);
+
+    @Query(
+            value = "SELECT * FROM cars WHERE brand_id = :brand_id%",
+            nativeQuery = true
+    )
+    Page<CarEntity> findAllByBrand(@Param("brand_id")Long brandId, Pageable pageable);
 }

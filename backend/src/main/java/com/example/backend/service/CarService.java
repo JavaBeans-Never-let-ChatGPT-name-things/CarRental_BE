@@ -9,6 +9,7 @@ import java.util.List;
 
 public interface CarService {
     List<CarDTO> findAll();
-    Page<CarDTO> findByAllWithPagination(CarPageRequestDTO carPageRequestDTO);
-    Page<CarDTO> findByAllWithPaginationAndFilter(CarPageRequestDTO carPageRequestDTO, String id);
+    Page<CarDTO> findAllWithPagination(CarPageRequestDTO carPageRequestDTO);
+    Page<CarDTO> findByIdWithPaginationAndFilter(CarPageRequestDTO carPageRequestDTO, String id);
+    Page<CarDTO> findByBrandIdWithPagination(CarPageRequestDTO carPageRequestDTO, Long brandId);
 }
