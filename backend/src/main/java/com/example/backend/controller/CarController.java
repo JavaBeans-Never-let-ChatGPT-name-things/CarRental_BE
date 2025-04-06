@@ -24,15 +24,20 @@ public class CarController {
 
     @GetMapping("/pagination")
     public Page<CarDTO> findAllWithPagination(@RequestBody CarPageRequestDTO carPageRequestDTO) {
-        return carService.findByAllWithPagination(carPageRequestDTO);
+        return carService.findAllWithPagination(carPageRequestDTO);
     }
 
     @GetMapping("/pagination/filter/{carId}")
     public Page<CarDTO> findAllWithPaginationAndFilter(@RequestBody CarPageRequestDTO carPageRequestDTO,@PathVariable("carId") String id) {
-        return carService.findByAllWithPaginationAndFilter(carPageRequestDTO, id);
+        return carService.findByIdWithPaginationAndFilter(carPageRequestDTO, id);
     }
     @GetMapping("/brands")
     public List<CarBrandEntity> findAllBrands() {
         return carBrandService.getAllCarBrands();
+    }
+
+    @GetMapping("/pagination/filter/brand/{brandId}")
+    public Page<CarDTO> findByBrandIdWithPagination(@RequestBody CarPageRequestDTO carPageRequestDTO, @PathVariable("brandId") Long brandId) {
+        return carService.findByBrandIdWithPagination(carPageRequestDTO, brandId);
     }
 }

@@ -89,4 +89,7 @@ public class AccountEntity extends AbstractAuditing<Long>{
     public void addFavouriteCar(CarEntity car) {
         favouriteCars.add(car);
     }
+    public void removeFavouriteCar(CarEntity car) {
+        favouriteCars.remove(car);
+    }
 }

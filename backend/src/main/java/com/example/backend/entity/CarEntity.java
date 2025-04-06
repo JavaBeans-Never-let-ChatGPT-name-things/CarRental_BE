@@ -70,4 +70,11 @@ public class CarEntity extends AbstractAuditing<String> {
             inverseJoinColumns = @JoinColumn(name = "account_id")
     )
     List<AccountEntity> accounts = new ArrayList<>();
+
+    public void addAccount(AccountEntity account) {
+        accounts.add(account);
+    }
+    public void removeAccount(AccountEntity account) {
+        accounts.remove(account);
+    }
 }

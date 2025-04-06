@@ -1,0 +1,50 @@
+package com.example.backend.service;
+
+import com.example.backend.entity.AccountEntity;
+import com.example.backend.entity.CarEntity;
+import com.example.backend.repository.AccountRepository;
+import com.example.backend.repository.CarRepository;
+import com.example.backend.service.dto.AccountDTO;
+import com.example.backend.service.mapper.AccountMapper;
+import lombok.RequiredArgsConstructor;
+import org.springframework.stereotype.Service;
+
+import java.util.Optional;
+
+@RequiredArgsConstructor
+@Service
+public class AccountServiceImpl implements AccountService{
+    private final AccountRepository accountRepository;
+    private final CarRepository carRepository;
+    private final AccountMapper accountMapper;
+    private final JwtService jwtService;
+    @Override
+    public Optional<AccountDTO> findByUsername(String token) {
+        String username = jwtService.extractUserName(token);
+        if (username != null) {
+            return accountRepository.findByUsername(username)
+                    .map(accountMapper::toDto);
+        }
+        return Optional.empty();
+    }
+
+    @Override
+    public void updateFavouriteCar(String carId, String token) {
+        String username = jwtService.extractUserName(token);
+        if (username != null) {
+            AccountEntity accountEntity = accountRepository.findByUsername(username).orElseThrow(
+                    () -> new RuntimeException("Account not found")
+            );
+            CarEntity carEntity = carRepository.findById(carId).orElseThrow(
+                    () -> new RuntimeException("Car not found")
+            );
+            if (accountEntity.getFavouriteCars().contains(carEntity)) {
+                accountEntity.removeFavouriteCar(carEntity);
+            } else {
+                accountEntity.addFavouriteCar(carEntity);
+            }
+            accountRepository.save(accountEntity);
+            carRepository.save(carEntity);
+        }
+    }
+}
