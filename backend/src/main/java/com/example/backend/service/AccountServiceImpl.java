@@ -5,8 +5,12 @@ import com.example.backend.entity.CarEntity;
 import com.example.backend.repository.AccountRepository;
 import com.example.backend.repository.CarRepository;
 import com.example.backend.service.dto.AccountDTO;
+import com.example.backend.service.dto.CarDTO;
+import com.example.backend.service.dto.request.CarPageRequestDTO;
 import com.example.backend.service.mapper.AccountMapper;
+import com.example.backend.service.mapper.CarMapper;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
 import org.springframework.stereotype.Service;
 
 import java.util.Optional;
@@ -17,6 +21,7 @@ public class AccountServiceImpl implements AccountService{
     private final AccountRepository accountRepository;
     private final CarRepository carRepository;
     private final AccountMapper accountMapper;
+    private final CarMapper carMapper;
     private final JwtService jwtService;
     @Override
     public Optional<AccountDTO> findByUsername(String token) {
@@ -46,5 +51,19 @@ public class AccountServiceImpl implements AccountService{
             accountRepository.save(accountEntity);
             carRepository.save(carEntity);
         }
+    }
+
+    @Override
+    public Page<CarDTO> getFavouriteCars(String token, CarPageRequestDTO carPageRequestDTO) {
+        String username = jwtService.extractUserName(token);
+        if (username != null) {
+            AccountEntity accountEntity = accountRepository.findByUsername(username).orElseThrow(
+                    () -> new RuntimeException("Account not found")
+            );
+
+            return carRepository.findAllByIdIn(accountEntity.getFavouriteCars().stream().map(CarEntity::getId).toList(), carPageRequestDTO.getPageable(carPageRequestDTO))
+                    .map(carMapper::toDto);
+        }
+        return Page.empty();
     }
 }

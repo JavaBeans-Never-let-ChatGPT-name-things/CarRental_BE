@@ -20,7 +20,15 @@ public interface CarRepository extends JpaRepository<CarEntity, String> {
 
     @Query(
             value = "SELECT * FROM cars WHERE brand_id = :brand_id%",
+            countQuery = "SELECT COUNT(*) FROM cars WHERE brand_id = :brand_id%",
             nativeQuery = true
     )
     Page<CarEntity> findAllByBrand(@Param("brand_id")Long brandId, Pageable pageable);
+
+    @Query(
+            value = "SELECT * FROM cars where id IN (:ids)",
+            countQuery = "SELECT COUNT(*) FROM cars where id IN (:ids)",
+            nativeQuery = true
+    )
+    Page<CarEntity> findAllByIdIn(Iterable<String> ids, Pageable pageable);
 }

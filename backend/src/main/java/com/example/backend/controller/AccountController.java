@@ -1,8 +1,11 @@
 package com.example.backend.controller;
 
 import com.example.backend.service.AccountService;
+import com.example.backend.service.dto.CarDTO;
+import com.example.backend.service.dto.request.CarPageRequestDTO;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -45,5 +48,14 @@ public class AccountController {
             return token.substring(7);
         }
         return null;
+    }
+
+    @GetMapping("/favourite/")
+    public Page<CarDTO> getFavouriteCars(HttpServletRequest request, @RequestBody CarPageRequestDTO carPageRequestDTO) {
+        String token = extractToken(request);
+        if (token == null || token.isEmpty()) {
+            return null;
+        }
+        return accountService.getFavouriteCars(token, carPageRequestDTO);
     }
 }
