@@ -1,5 +1,5 @@
 package com.example.backend.entity.enums;
 
 public enum ReturnCarStatus {
-    INTACT, SCRATCHED, DAMAGED, LOST
+    INTACT, NOT_RETURNED, DAMAGED, LOST
 }
