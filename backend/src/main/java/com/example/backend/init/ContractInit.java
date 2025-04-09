@@ -11,6 +11,7 @@ import com.example.backend.repository.ContractRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.CommandLineRunner;
+import org.springframework.core.annotation.Order;
 import org.springframework.stereotype.Component;
 
 import java.time.LocalDate;
@@ -21,6 +22,7 @@ import java.util.Random;
 @Component
 @RequiredArgsConstructor
 @Slf4j
+@Order(3)
 public class ContractInit implements CommandLineRunner {
     private final ContractRepository contractRepository;
     private final CarRepository carRepository;

@@ -23,13 +23,13 @@ public class CarController {
     }
 
     @GetMapping("/pagination")
-    public Page<CarDTO> findAllWithPagination(@RequestBody CarPageRequestDTO carPageRequestDTO) {
-        return carService.findAllWithPagination(carPageRequestDTO);
+    public List<CarDTO> findAllWithPagination(@RequestBody CarPageRequestDTO carPageRequestDTO) {
+        return carService.findAllWithPagination(carPageRequestDTO).getContent();
     }
 
     @GetMapping("/pagination/filter/{carId}")
-    public Page<CarDTO> findAllWithPaginationAndFilter(@RequestBody CarPageRequestDTO carPageRequestDTO,@PathVariable("carId") String id) {
-        return carService.findByIdWithPaginationAndFilter(carPageRequestDTO, id);
+    public List<CarDTO> findAllWithPaginationAndFilter(@RequestBody CarPageRequestDTO carPageRequestDTO,@PathVariable("carId") String id) {
+        return carService.findByIdWithPaginationAndFilter(carPageRequestDTO, id).getContent();
     }
     @GetMapping("/brands")
     public List<CarBrandEntity> findAllBrands() {
@@ -37,7 +37,7 @@ public class CarController {
     }
 
     @GetMapping("/pagination/filter/brand/{brandId}")
-    public Page<CarDTO> findByBrandIdWithPagination(@RequestBody CarPageRequestDTO carPageRequestDTO, @PathVariable("brandId") Long brandId) {
-        return carService.findByBrandIdWithPagination(carPageRequestDTO, brandId);
+    public List<CarDTO> findByBrandIdWithPagination(@RequestBody CarPageRequestDTO carPageRequestDTO, @PathVariable("brandId") Long brandId) {
+        return carService.findByBrandIdWithPagination(carPageRequestDTO, brandId).getContent();
     }
 }

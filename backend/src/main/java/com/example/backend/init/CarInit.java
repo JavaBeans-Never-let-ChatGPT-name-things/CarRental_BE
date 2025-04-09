@@ -10,6 +10,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.CommandLineRunner;
+import org.springframework.core.annotation.Order;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
@@ -18,6 +19,7 @@ import java.util.Random;
 
 @Component
 @RequiredArgsConstructor
+@Order(2)
 @FieldDefaults(makeFinal = true, level = AccessLevel.PRIVATE)
 @Slf4j
 public class CarInit implements CommandLineRunner {
@@ -47,14 +49,14 @@ public class CarInit implements CommandLineRunner {
         }
         if (carRepository.count() == 0) {
             List<String> brandImageUrls = List.of(
-                    "https://res.cloudinary.com/daypnjdng/image/upload/v1743695601/car_audi_ugo1dy.jpg",   // Audi
-                    "https://res.cloudinary.com/daypnjdng/image/upload/v1743695361/bmw_car_xdux7z.jpg",    // BMW
-                    "https://res.cloudinary.com/daypnjdng/image/upload/v1743695602/chevrolet_car_cakyq8.png", // Chevrolet
-                    "https://res.cloudinary.com/daypnjdng/image/upload/v1743695358/ford_car_gbvmjd.jpg",     // Ford
-                    "https://res.cloudinary.com/daypnjdng/image/upload/v1743695358/mercedes_car_aezppg.png",  // Mercedes
-                    "https://res.cloudinary.com/daypnjdng/image/upload/v1743695359/tesla_car_xl1j2z.jpg",     // Tesla
-                    "https://res.cloudinary.com/daypnjdng/image/upload/v1743695358/ferrari_car_xtn0uy.jpg",  // Ferrari
-                    "https://res.cloudinary.com/daypnjdng/image/upload/v1743695413/land_rover_car_kowp03.png" // Land Rover
+                    "https://res.cloudinary.com/daypnjdng/image/upload/v1744098143/pngwing_wgaksu.png",
+                    "https://res.cloudinary.com/daypnjdng/image/upload/v1744098144/pngwing.com_4_whvalz.png",    // BMW
+                    "https://res.cloudinary.com/daypnjdng/image/upload/v1744098144/pngwing.com_23_vhrafv.png", // Chevrolet
+                    "https://res.cloudinary.com/daypnjdng/image/upload/v1744098143/pngwing.com_24_bkqati.png",     // Ford
+                    "https://res.cloudinary.com/daypnjdng/image/upload/v1744098143/pngwing.com_25_xdh6fr.png",  // Mercedes
+                    "https://res.cloudinary.com/daypnjdng/image/upload/v1744098143/pngwing.com_26_kcxd8t.png",     // Tesla
+                    "https://res.cloudinary.com/daypnjdng/image/upload/v1744098143/pngwing.com_4_-1_u7isgc.png",  // Ferrari
+                    "https://res.cloudinary.com/daypnjdng/image/upload/v1744098142/9usc6fpmecn6l0fao3nh85dmur-049e7c1c445006fbef4093e696214990_1_uoxz2g.png" // Land Rover
             );
 
             List<String> audiCars = List.of("Audi A3", "Audi A4", "Audi A5", "Audi A6", "Audi A7", "Audi A8", "Audi Q3", "Audi Q5", "Audi Q7", "Audi Q8", "Audi R8", "Audi TT", "Audi e-tron", "Audi e-tron GT");
