@@ -2,7 +2,7 @@ package com.example.backend.controller;
 
 import com.example.backend.service.AccountService;
 import com.example.backend.service.dto.CarDTO;
-import com.example.backend.service.dto.request.ContractDTO;
+import com.example.backend.service.dto.request.ContractRequestDTO;
 import com.example.backend.service.dto.request.UpdateUserRequestDTO;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
@@ -80,7 +80,7 @@ public class AccountController {
     }
 
     @PostMapping ("/rentCar/{carId}")
-    public ResponseEntity<?> rentCar(HttpServletRequest request, @RequestBody ContractDTO contract, @PathVariable("carId") String carId)
+    public ResponseEntity<?> rentCar(HttpServletRequest request, @RequestBody ContractRequestDTO contract, @PathVariable("carId") String carId)
     {
         String token = extractToken(request);
         if (token == null || token.isEmpty()) {

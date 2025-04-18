@@ -9,7 +9,7 @@ import java.time.LocalDate;
 
 @Data
 @FieldDefaults(level = AccessLevel.PRIVATE)
-public class ContractDTO {
+public class ContractRequestDTO {
     LocalDate startDate;
     LocalDate endDate;
     float deposit;

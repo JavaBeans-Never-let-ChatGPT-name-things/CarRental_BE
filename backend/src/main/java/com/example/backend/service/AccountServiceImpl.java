@@ -9,14 +9,12 @@ import com.example.backend.repository.CarRepository;
 import com.example.backend.repository.ContractRepository;
 import com.example.backend.service.dto.AccountDTO;
 import com.example.backend.service.dto.CarDTO;
-import com.example.backend.service.dto.request.CarPageRequestDTO;
-import com.example.backend.service.dto.request.ContractDTO;
+import com.example.backend.service.dto.request.ContractRequestDTO;
 import com.example.backend.service.dto.request.UpdateUserRequestDTO;
 import com.example.backend.service.mapper.AccountMapper;
 import com.example.backend.service.mapper.CarMapper;
-import com.example.backend.service.mapper.ContractMapper;
+import com.example.backend.service.mapper.ContractRequestMapper;
 import lombok.RequiredArgsConstructor;
-import org.springframework.data.domain.Page;
 import org.springframework.stereotype.Service;
 
 import java.io.IOException;
@@ -32,7 +30,7 @@ public class AccountServiceImpl implements AccountService{
     private final CarMapper carMapper;
     private final JwtService jwtService;
     private final CloudinaryService cloudinaryService;
-    private final ContractMapper contractMapper;
+    private final ContractRequestMapper contractRequestMapper;
     private final ContractRepository contractRepository;
     @Override
     public Optional<AccountDTO> findByUsername(String token) {
@@ -96,7 +94,7 @@ public class AccountServiceImpl implements AccountService{
     }
 
     @Override
-    public void rentCar(ContractDTO contractDTO, String token, String carId) {
+    public void rentCar(ContractRequestDTO contractRequestDTO, String token, String carId) {
         String username = jwtService.extractUserName(token);
         if (username != null) {
             AccountEntity accountEntity = accountRepository.findByUsername(username).orElseThrow(
@@ -105,7 +103,7 @@ public class AccountServiceImpl implements AccountService{
             CarEntity carEntity = carRepository.findById(carId).orElseThrow(
                     () -> new RuntimeException("Car not found")
             );
-            RentalContractEntity rentalContractEntity = contractMapper.toEntity(contractDTO);
+            RentalContractEntity rentalContractEntity = contractRequestMapper.toEntity(contractRequestDTO);
             accountEntity.addContract(rentalContractEntity);
             carEntity.addContract(rentalContractEntity);
             rentalContractEntity.setAccount(accountEntity);
