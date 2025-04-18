@@ -9,6 +9,8 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
+import java.util.List;
+
 @Repository
 public interface CarRepository extends JpaRepository<CarEntity, String> {
     @Query(
@@ -30,5 +32,16 @@ public interface CarRepository extends JpaRepository<CarEntity, String> {
             countQuery = "SELECT COUNT(*) FROM cars where id IN (:ids)",
             nativeQuery = true
     )
-    Page<CarEntity> findAllByIdIn(Iterable<String> ids, Pageable pageable);
+    List<CarEntity> findAllByIdIn(Iterable<String> ids);
+    @Query(
+            value = "SELECT COUNT(*) FROM cars where brand_id = :brandId",
+            nativeQuery = true
+    )
+    Long countAllByBrandId(Long brandId);
+
+    @Query(
+            value = "SELECT COUNT(*) FROM cars WHERE id LIKE %:id%",
+            nativeQuery = true
+    )
+    Long countById(@Param("id") String id);
 }

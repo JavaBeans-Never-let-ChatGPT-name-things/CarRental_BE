@@ -9,6 +9,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
 import java.util.Map;
 
 @RestController
@@ -51,11 +52,11 @@ public class AccountController {
     }
 
     @GetMapping("/favourite/")
-    public Page<CarDTO> getFavouriteCars(HttpServletRequest request, @RequestBody CarPageRequestDTO carPageRequestDTO) {
+    public List<CarDTO> getFavouriteCars(HttpServletRequest request) {
         String token = extractToken(request);
         if (token == null || token.isEmpty()) {
             return null;
         }
-        return accountService.getFavouriteCars(token, carPageRequestDTO);
+        return accountService.getFavouriteCars(token);
     }
 }

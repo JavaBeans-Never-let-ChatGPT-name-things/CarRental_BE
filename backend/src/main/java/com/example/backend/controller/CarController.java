@@ -22,12 +22,12 @@ public class CarController {
         return carService.findAll();
     }
 
-    @GetMapping("/pagination")
+    @PostMapping("/pagination")
     public List<CarDTO> findAllWithPagination(@RequestBody CarPageRequestDTO carPageRequestDTO) {
         return carService.findAllWithPagination(carPageRequestDTO).getContent();
     }
 
-    @GetMapping("/pagination/filter/{carId}")
+    @PostMapping("/pagination/filter/{carId}")
     public List<CarDTO> findAllWithPaginationAndFilter(@RequestBody CarPageRequestDTO carPageRequestDTO,@PathVariable("carId") String id) {
         return carService.findByIdWithPaginationAndFilter(carPageRequestDTO, id).getContent();
     }
@@ -36,8 +36,21 @@ public class CarController {
         return carBrandService.getAllCarBrands();
     }
 
-    @GetMapping("/pagination/filter/brand/{brandId}")
+    @PostMapping("/pagination/filter/brand/{brandId}")
     public List<CarDTO> findByBrandIdWithPagination(@RequestBody CarPageRequestDTO carPageRequestDTO, @PathVariable("brandId") Long brandId) {
         return carService.findByBrandIdWithPagination(carPageRequestDTO, brandId).getContent();
+    }
+
+    @GetMapping("/count")
+    public Long countAll() {
+        return carService.countAll();
+    }
+    @GetMapping("/count/brand/{brandId}")
+    public Long countByBrandId(@PathVariable("brandId") Long brandId) {
+        return carService.countByBrandId(brandId);
+    }
+    @GetMapping("/count/filter/{carId}")
+    public Long countById(@PathVariable("carId") String id) {
+        return carService.countById(id);
     }
 }

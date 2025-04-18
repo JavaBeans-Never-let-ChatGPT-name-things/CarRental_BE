@@ -13,6 +13,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.stereotype.Service;
 
+import java.util.List;
 import java.util.Optional;
 
 @RequiredArgsConstructor
@@ -54,16 +55,16 @@ public class AccountServiceImpl implements AccountService{
     }
 
     @Override
-    public Page<CarDTO> getFavouriteCars(String token, CarPageRequestDTO carPageRequestDTO) {
+    public List<CarDTO> getFavouriteCars(String token) {
         String username = jwtService.extractUserName(token);
         if (username != null) {
             AccountEntity accountEntity = accountRepository.findByUsername(username).orElseThrow(
                     () -> new RuntimeException("Account not found")
             );
 
-            return carRepository.findAllByIdIn(accountEntity.getFavouriteCars().stream().map(CarEntity::getId).toList(), carPageRequestDTO.getPageable(carPageRequestDTO))
-                    .map(carMapper::toDto);
+            return carRepository.findAllByIdIn(accountEntity.getFavouriteCars().stream().map(CarEntity::getId).toList())
+                    .stream().map(carMapper::toDto).toList();
         }
-        return Page.empty();
+        return List.of();
     }
 }

@@ -16,6 +16,22 @@ import java.util.List;
 public class CarServiceImpl implements CarService{
     private final CarRepository carRepository;
     private final CarMapper carMapper;
+
+    @Override
+    public Long countAll() {
+        return carRepository.count();
+    }
+
+    @Override
+    public Long countByBrandId(Long brandId) {
+        return carRepository.countAllByBrandId(brandId);
+    }
+
+    @Override
+    public Long countById(String id) {
+        return carRepository.countById(id);
+    }
+
     @Override
     public List<CarDTO> findAll() {
         return carMapper.toDto(carRepository.findAll());

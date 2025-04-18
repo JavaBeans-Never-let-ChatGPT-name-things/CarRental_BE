@@ -8,6 +8,9 @@ import java.util.List;
 
 
 public interface CarService {
+    Long countAll();
+    Long countByBrandId(Long brandId);
+    Long countById(String id);
     List<CarDTO> findAll();
     Page<CarDTO> findAllWithPagination(CarPageRequestDTO carPageRequestDTO);
     Page<CarDTO> findByIdWithPaginationAndFilter(CarPageRequestDTO carPageRequestDTO, String id);
