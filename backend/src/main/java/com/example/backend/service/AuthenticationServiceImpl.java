@@ -84,6 +84,7 @@ public class AuthenticationServiceImpl implements AuthenticationService {
         account.setPasswordHash(passwordEncoder.encode(request.getPassword()));
         account.setVerificationCodeExpiresAt(LocalDateTime.now().plusMinutes(15));
         account.setEnabled(false);
+        account.setGender(1);
         account.setDisplayName(request.getDisplayName());
         account.setAccountRole(AccountRole.USER);
         sendVerificationEmail(account, "Account Verification");

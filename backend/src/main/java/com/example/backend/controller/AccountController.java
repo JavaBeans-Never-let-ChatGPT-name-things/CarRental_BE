@@ -2,13 +2,14 @@ package com.example.backend.controller;
 
 import com.example.backend.service.AccountService;
 import com.example.backend.service.dto.CarDTO;
-import com.example.backend.service.dto.request.CarPageRequestDTO;
+import com.example.backend.service.dto.request.UpdateUserRequestDTO;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
-import org.springframework.data.domain.Page;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.io.IOException;
 import java.util.List;
 import java.util.Map;
 
@@ -58,5 +59,22 @@ public class AccountController {
             return null;
         }
         return accountService.getFavouriteCars(token);
+    }
+
+    @PostMapping(path =  "/update/profile", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public ResponseEntity<?> updateProfile(HttpServletRequest request, @ModelAttribute UpdateUserRequestDTO updateProfile)
+    {
+        String token = extractToken(request);
+        if (token == null || token.isEmpty()) {
+            return ResponseEntity.badRequest().body(Map.of("message","Token is missing or invalid"));
+        }
+        try {
+            accountService.updateProfile(updateProfile, token);
+        } catch (RuntimeException e) {
+            return ResponseEntity.badRequest().body(Map.of("message", e.getMessage()));
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+        return ResponseEntity.ok(Map.of("message", "Profile updated successfully"));
     }
 }

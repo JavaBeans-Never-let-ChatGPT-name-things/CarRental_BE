@@ -10,6 +10,7 @@ public class AccountDTO {
     String username;
     String email;
     String displayName;
+    int gender;
     String address;
     String phoneNumber;
     String avatarUrl;

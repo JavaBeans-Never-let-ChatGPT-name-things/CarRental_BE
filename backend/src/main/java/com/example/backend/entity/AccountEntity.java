@@ -46,6 +46,9 @@ public class AccountEntity extends AbstractAuditing<Long>{
     @Column(name = "phone_number")
     String phoneNumber;
 
+    @Column(name = "gender")
+    int gender;
+
     @Column(name = "avatar", columnDefinition = "TEXT")
     String avatarUrl;
 
