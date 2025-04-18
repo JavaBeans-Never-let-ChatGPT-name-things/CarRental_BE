@@ -2,6 +2,7 @@ package com.example.backend.controller;
 
 import com.example.backend.service.AccountService;
 import com.example.backend.service.dto.CarDTO;
+import com.example.backend.service.dto.request.ContractDTO;
 import com.example.backend.service.dto.request.UpdateUserRequestDTO;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
@@ -76,5 +77,20 @@ public class AccountController {
             throw new RuntimeException(e);
         }
         return ResponseEntity.ok(Map.of("message", "Profile updated successfully"));
+    }
+
+    @PostMapping ("/rentCar/{carId}")
+    public ResponseEntity<?> rentCar(HttpServletRequest request, @RequestBody ContractDTO contract, @PathVariable("carId") String carId)
+    {
+        String token = extractToken(request);
+        if (token == null || token.isEmpty()) {
+            return ResponseEntity.badRequest().body(Map.of("message","Token is missing or invalid"));
+        }
+        try {
+            accountService.rentCar(contract, token, carId);
+        } catch (RuntimeException e) {
+            return ResponseEntity.badRequest().body(Map.of("message", e.getMessage()));
+        }
+        return ResponseEntity.ok(Map.of("message", "Car rented successfully"));
     }
 }

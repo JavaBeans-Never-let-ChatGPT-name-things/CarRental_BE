@@ -2,14 +2,19 @@ package com.example.backend.service;
 
 import com.example.backend.entity.AccountEntity;
 import com.example.backend.entity.CarEntity;
+import com.example.backend.entity.RentalContractEntity;
+import com.example.backend.entity.enums.CarState;
 import com.example.backend.repository.AccountRepository;
 import com.example.backend.repository.CarRepository;
+import com.example.backend.repository.ContractRepository;
 import com.example.backend.service.dto.AccountDTO;
 import com.example.backend.service.dto.CarDTO;
 import com.example.backend.service.dto.request.CarPageRequestDTO;
+import com.example.backend.service.dto.request.ContractDTO;
 import com.example.backend.service.dto.request.UpdateUserRequestDTO;
 import com.example.backend.service.mapper.AccountMapper;
 import com.example.backend.service.mapper.CarMapper;
+import com.example.backend.service.mapper.ContractMapper;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.stereotype.Service;
@@ -27,8 +32,8 @@ public class AccountServiceImpl implements AccountService{
     private final CarMapper carMapper;
     private final JwtService jwtService;
     private final CloudinaryService cloudinaryService;
-    private final AuthenticationService authenticationService;
-    private final EmailService emailService;
+    private final ContractMapper contractMapper;
+    private final ContractRepository contractRepository;
     @Override
     public Optional<AccountDTO> findByUsername(String token) {
         String username = jwtService.extractUserName(token);
@@ -88,6 +93,26 @@ public class AccountServiceImpl implements AccountService{
         account.setAvatarUrl(url);
         account.setEmail(updateUserRequestDTO.getEmail());
         accountRepository.save(account);
+    }
+
+    @Override
+    public void rentCar(ContractDTO contractDTO, String token, String carId) {
+        String username = jwtService.extractUserName(token);
+        if (username != null) {
+            AccountEntity accountEntity = accountRepository.findByUsername(username).orElseThrow(
+                    () -> new RuntimeException("Account not found")
+            );
+            CarEntity carEntity = carRepository.findById(carId).orElseThrow(
+                    () -> new RuntimeException("Car not found")
+            );
+            RentalContractEntity rentalContractEntity = contractMapper.toEntity(contractDTO);
+            accountEntity.addContract(rentalContractEntity);
+            carEntity.addContract(rentalContractEntity);
+            rentalContractEntity.setAccount(accountEntity);
+            rentalContractEntity.setCar(carEntity);
+            carEntity.setState(CarState.RENTED);
+            contractRepository.save(rentalContractEntity);
+        }
     }
 
 }
