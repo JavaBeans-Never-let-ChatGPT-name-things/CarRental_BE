@@ -229,6 +229,7 @@ public class AuthenticationServiceImpl implements AuthenticationService {
                     return TokenResponse.builder()
                             .role(account.getAccountRole())
                             .accessToken(jwtService.generateAccessToken(account))
+                            .refreshToken(refreshToken)
                             .build();
                 }
                 else
