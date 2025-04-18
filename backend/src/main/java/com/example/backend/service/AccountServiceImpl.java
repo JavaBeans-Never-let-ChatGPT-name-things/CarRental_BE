@@ -4,16 +4,19 @@ import com.example.backend.entity.AccountEntity;
 import com.example.backend.entity.CarEntity;
 import com.example.backend.entity.RentalContractEntity;
 import com.example.backend.entity.enums.CarState;
+import com.example.backend.entity.enums.ContractStatus;
 import com.example.backend.repository.AccountRepository;
 import com.example.backend.repository.CarRepository;
 import com.example.backend.repository.ContractRepository;
 import com.example.backend.service.dto.AccountDTO;
 import com.example.backend.service.dto.CarDTO;
+import com.example.backend.service.dto.RentalContractDTO;
 import com.example.backend.service.dto.request.ContractRequestDTO;
 import com.example.backend.service.dto.request.UpdateUserRequestDTO;
 import com.example.backend.service.mapper.AccountMapper;
 import com.example.backend.service.mapper.CarMapper;
 import com.example.backend.service.mapper.ContractRequestMapper;
+import com.example.backend.service.mapper.RentalContractMapper;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -32,6 +35,7 @@ public class AccountServiceImpl implements AccountService{
     private final CloudinaryService cloudinaryService;
     private final ContractRequestMapper contractRequestMapper;
     private final ContractRepository contractRepository;
+    private final RentalContractMapper rentalContractMapper;
     @Override
     public Optional<AccountDTO> findByUsername(String token) {
         String username = jwtService.extractUserName(token);
@@ -103,7 +107,11 @@ public class AccountServiceImpl implements AccountService{
             CarEntity carEntity = carRepository.findById(carId).orElseThrow(
                     () -> new RuntimeException("Car not found")
             );
+            if (carEntity.getState() != CarState.AVAILABLE) {
+                throw new RuntimeException("Car is not available");
+            }
             RentalContractEntity rentalContractEntity = contractRequestMapper.toEntity(contractRequestDTO);
+            rentalContractEntity.setContractStatus(ContractStatus.BOOKED);
             accountEntity.addContract(rentalContractEntity);
             carEntity.addContract(rentalContractEntity);
             rentalContractEntity.setAccount(accountEntity);
@@ -111,6 +119,19 @@ public class AccountServiceImpl implements AccountService{
             carEntity.setState(CarState.RENTED);
             contractRepository.save(rentalContractEntity);
         }
+    }
+
+    @Override
+    public List<RentalContractDTO> getRentalContracts(String token) {
+        String username = jwtService.extractUserName(token);
+        if (username != null) {
+            AccountEntity accountEntity = accountRepository.findByUsername(username).orElseThrow(
+                    () -> new RuntimeException("Account not found")
+            );
+            return contractRepository.findAllByAccount_Username(username)
+                    .stream().map(rentalContractMapper::toDto).toList();
+        }
+        return List.of();
     }
 
 }

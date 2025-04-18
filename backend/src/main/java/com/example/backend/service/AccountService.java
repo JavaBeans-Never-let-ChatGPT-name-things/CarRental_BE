@@ -2,6 +2,7 @@ package com.example.backend.service;
 
 import com.example.backend.service.dto.AccountDTO;
 import com.example.backend.service.dto.CarDTO;
+import com.example.backend.service.dto.RentalContractDTO;
 import com.example.backend.service.dto.request.ContractRequestDTO;
 import com.example.backend.service.dto.request.UpdateUserRequestDTO;
 
@@ -15,4 +16,5 @@ public interface AccountService {
     List<CarDTO> getFavouriteCars(String token);
     void updateProfile(UpdateUserRequestDTO updateUserRequestDTO, String token) throws IOException;
     void rentCar(ContractRequestDTO contractRequestDTO, String token, String carId);
+    List<RentalContractDTO> getRentalContracts(String token);
 }

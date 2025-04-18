@@ -1,5 +1,6 @@
 package com.example.backend.entity;
 
+import com.example.backend.entity.enums.ContractStatus;
 import com.example.backend.entity.enums.PaymentStatus;
 import com.example.backend.entity.enums.ReturnCarStatus;
 import jakarta.persistence.*;
@@ -57,6 +58,10 @@ public class RentalContractEntity extends AbstractAuditing<Long> {
 
     @Column(name = "penalty_fee")
     float penaltyFee;
+
+    @Column(name = "contract_status")
+    @Enumerated(EnumType.STRING)
+    ContractStatus contractStatus;
 
     @OneToOne(cascade = CascadeType.ALL)
     @JoinColumn(name = "review_id")

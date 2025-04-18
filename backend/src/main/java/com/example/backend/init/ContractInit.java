@@ -3,6 +3,7 @@ package com.example.backend.init;
 import com.example.backend.entity.AccountEntity;
 import com.example.backend.entity.CarEntity;
 import com.example.backend.entity.RentalContractEntity;
+import com.example.backend.entity.enums.ContractStatus;
 import com.example.backend.entity.enums.PaymentStatus;
 import com.example.backend.entity.enums.ReturnCarStatus;
 import com.example.backend.repository.AccountRepository;
@@ -53,6 +54,7 @@ public class ContractInit implements CommandLineRunner {
                 LocalDate endDate = LocalDate.now().plusDays(100 + i);
 
                 contract.setStartDate(startDate);
+                contract.setContractStatus(ContractStatus.BOOKED);
                 contract.setEndDate(endDate);
                 contract.setDeposit(500.0f + i * 100);
                 contract.setPaymentMethod("CREDIT_CARD");

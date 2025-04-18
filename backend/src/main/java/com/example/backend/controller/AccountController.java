@@ -2,6 +2,7 @@ package com.example.backend.controller;
 
 import com.example.backend.service.AccountService;
 import com.example.backend.service.dto.CarDTO;
+import com.example.backend.service.dto.RentalContractDTO;
 import com.example.backend.service.dto.request.ContractRequestDTO;
 import com.example.backend.service.dto.request.UpdateUserRequestDTO;
 import jakarta.servlet.http.HttpServletRequest;
@@ -92,5 +93,14 @@ public class AccountController {
             return ResponseEntity.badRequest().body(Map.of("message", e.getMessage()));
         }
         return ResponseEntity.ok(Map.of("message", "Car rented successfully"));
+    }
+
+    @GetMapping("/rentalContracts")
+    public List<RentalContractDTO> getRentalContracts(HttpServletRequest request) {
+        String token = extractToken(request);
+        if (token == null || token.isEmpty()) {
+            return null;
+        }
+        return accountService.getRentalContracts(token);
     }
 }
