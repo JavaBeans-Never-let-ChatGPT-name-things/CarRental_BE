@@ -1,6 +1,7 @@
 package com.example.backend.controller;
 
 import com.example.backend.entity.CarBrandEntity;
+import com.example.backend.entity.ReviewEntity;
 import com.example.backend.service.CarBrandService;
 import com.example.backend.service.CarService;
 import com.example.backend.service.dto.CarDTO;
@@ -52,5 +53,10 @@ public class CarController {
     @GetMapping("/count/filter/{carId}")
     public Long countById(@PathVariable("carId") String id) {
         return carService.countById(id);
+    }
+
+    @GetMapping("/reviews/{carId}")
+    public List<ReviewEntity> findById(@PathVariable("carId") String id) {
+        return carService.findReviewsById(id);
     }
 }

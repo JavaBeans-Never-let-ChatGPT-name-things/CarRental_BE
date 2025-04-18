@@ -3,6 +3,7 @@ package com.example.backend.service;
 import com.example.backend.entity.AccountEntity;
 import com.example.backend.entity.CarEntity;
 import com.example.backend.entity.RentalContractEntity;
+import com.example.backend.entity.ReviewEntity;
 import com.example.backend.entity.enums.CarState;
 import com.example.backend.entity.enums.ContractStatus;
 import com.example.backend.repository.AccountRepository;
@@ -132,6 +133,26 @@ public class AccountServiceImpl implements AccountService{
                     .stream().map(rentalContractMapper::toDto).toList();
         }
         return List.of();
+    }
+
+    @Override
+    public void reviewRentalContract(Long rentalContractId, ReviewEntity entity) {
+        RentalContractEntity rentalContractEntity = contractRepository.findById(rentalContractId).orElseThrow(
+                () -> new RuntimeException("Rental contract not found")
+        );
+        CarEntity car = carRepository.findById(rentalContractEntity.getCar().getId()).orElseThrow(
+                () -> new RuntimeException("Car not found")
+        );
+        if (car.getState() != CarState.RENTED) {
+            throw new RuntimeException("Car is not rented");
+        }
+        int star = entity.getStarsNum();
+        float currentRating = car.getRating() * car.getReviewsNum();
+        car.setReviewsNum(car.getReviewsNum() + 1);
+        car.setRating((currentRating + star) / car.getReviewsNum());
+        carRepository.save(car);
+        rentalContractEntity.setReview(entity);
+        contractRepository.save(rentalContractEntity);
     }
 
 }

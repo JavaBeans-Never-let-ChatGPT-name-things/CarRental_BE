@@ -1,7 +1,11 @@
 package com.example.backend.service;
 
 import com.example.backend.entity.CarEntity;
+import com.example.backend.entity.RentalContractEntity;
+import com.example.backend.entity.ReviewEntity;
 import com.example.backend.repository.CarRepository;
+import com.example.backend.repository.ContractRepository;
+import com.example.backend.repository.ReviewRepository;
 import com.example.backend.service.dto.CarDTO;
 import com.example.backend.service.dto.request.CarPageRequestDTO;
 import com.example.backend.service.mapper.CarMapper;
@@ -11,10 +15,14 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.Objects;
+
 @Service
 @RequiredArgsConstructor
 public class CarServiceImpl implements CarService{
     private final CarRepository carRepository;
+    private final ContractRepository contractRepository;
+    private final ReviewRepository reviewRepository;
     private final CarMapper carMapper;
 
     @Override
@@ -63,5 +71,19 @@ public class CarServiceImpl implements CarService{
         Pageable pageable = new CarPageRequestDTO().getPageable(carPageRequestDTO);
         Page<CarEntity> carEntityPage = carRepository.findAllByBrand(brandId, pageable);
         return carEntityPage.map(carMapper::toDto);
+    }
+
+    @Override
+    public List<ReviewEntity> findReviewsById(String id) {
+        List<RentalContractEntity> rentalContracts = contractRepository.findAllByCar_Id(id);
+        if (rentalContracts != null && !rentalContracts.isEmpty()) {
+            List<Long> reviewIds = rentalContracts.stream()
+                    .map(RentalContractEntity::getReview)
+                    .filter(Objects::nonNull)
+                    .map(ReviewEntity::getId)
+                    .toList();
+                return reviewRepository.findAllById(reviewIds);
+        }
+        return List.of();
     }
 }

@@ -1,5 +1,6 @@
 package com.example.backend.service;
 
+import com.example.backend.entity.ReviewEntity;
 import com.example.backend.service.dto.AccountDTO;
 import com.example.backend.service.dto.CarDTO;
 import com.example.backend.service.dto.RentalContractDTO;
@@ -17,4 +18,5 @@ public interface AccountService {
     void updateProfile(UpdateUserRequestDTO updateUserRequestDTO, String token) throws IOException;
     void rentCar(ContractRequestDTO contractRequestDTO, String token, String carId);
     List<RentalContractDTO> getRentalContracts(String token);
+    void reviewRentalContract(Long rentalContractId, ReviewEntity entity);
 }

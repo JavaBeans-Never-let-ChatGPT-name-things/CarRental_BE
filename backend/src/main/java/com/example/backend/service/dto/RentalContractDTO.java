@@ -11,6 +11,7 @@ import java.time.LocalDate;
 @Data
 @FieldDefaults(level = AccessLevel.PRIVATE)
 public class RentalContractDTO {
+    Long id;
     String carId;
     String carImageUrl;
     LocalDate startDate;

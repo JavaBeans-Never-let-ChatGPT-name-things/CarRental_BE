@@ -9,4 +9,5 @@ import java.util.List;
 @Repository
 public interface ContractRepository extends JpaRepository<RentalContractEntity, Long> {
     List<RentalContractEntity> findAllByAccount_Username(String username);
+    List<RentalContractEntity> findAllByCar_Id(String carId);
 }

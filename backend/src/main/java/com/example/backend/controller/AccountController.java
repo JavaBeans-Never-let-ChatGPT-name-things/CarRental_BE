@@ -1,5 +1,6 @@
 package com.example.backend.controller;
 
+import com.example.backend.entity.ReviewEntity;
 import com.example.backend.service.AccountService;
 import com.example.backend.service.dto.CarDTO;
 import com.example.backend.service.dto.RentalContractDTO;
@@ -102,5 +103,16 @@ public class AccountController {
             return null;
         }
         return accountService.getRentalContracts(token);
+    }
+
+    @PostMapping("/rentalContracts/review/{contractId}")
+    public ResponseEntity<?> reviewRentalContract(@PathVariable("contractId") Long contractId,
+                                                  @RequestBody ReviewEntity review) {
+        try {
+            accountService.reviewRentalContract(contractId, review);
+        } catch (RuntimeException e) {
+            return ResponseEntity.badRequest().body(Map.of("message", e.getMessage()));
+        }
+        return ResponseEntity.ok(Map.of("message", "Review added successfully"));
     }
 }
