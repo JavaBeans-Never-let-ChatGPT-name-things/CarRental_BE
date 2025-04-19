@@ -19,12 +19,14 @@ import com.example.backend.service.mapper.CarMapper;
 import com.example.backend.service.mapper.ContractRequestMapper;
 import com.example.backend.service.mapper.RentalContractMapper;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import java.io.IOException;
 import java.util.List;
 import java.util.Optional;
 
+@Slf4j
 @RequiredArgsConstructor
 @Service
 public class AccountServiceImpl implements AccountService{
@@ -84,18 +86,26 @@ public class AccountServiceImpl implements AccountService{
 
     //Todo : check if email is already used, and send email to confirm
     @Override
-    public void updateProfile(UpdateUserRequestDTO updateUserRequestDTO, String token) throws IOException {
-        String url = cloudinaryService.uploadFile(updateUserRequestDTO.getAvatar(), "profile");
+    public void updateProfile(UpdateUserRequestDTO updateUserRequestDTO, String token) {
         AccountEntity account = accountRepository.findByUsername(jwtService.extractUserName(token)).orElseThrow(
                 () -> new RuntimeException("Account not found")
         );
+        try {
+            if (updateUserRequestDTO.getAvatar() != null) {
+                String url = cloudinaryService.uploadFile(updateUserRequestDTO.getAvatar(), "profile");
+                account.setAvatarUrl(url);
+            }
         account.setGender(updateUserRequestDTO.getGender());
         account.setDisplayName(updateUserRequestDTO.getDisplayName());
         account.setAddress(updateUserRequestDTO.getAddress());
         account.setPhoneNumber(updateUserRequestDTO.getPhoneNumber());
-        account.setAvatarUrl(url);
         account.setEmail(updateUserRequestDTO.getEmail());
         accountRepository.save(account);
+        }
+        catch(Exception e){
+            log.info("Error uploading file: {}", e.getMessage());
+            throw new RuntimeException(e.getMessage());
+        }
     }
 
     @Override

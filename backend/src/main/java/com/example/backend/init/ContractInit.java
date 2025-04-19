@@ -3,6 +3,7 @@ package com.example.backend.init;
 import com.example.backend.entity.AccountEntity;
 import com.example.backend.entity.CarEntity;
 import com.example.backend.entity.RentalContractEntity;
+import com.example.backend.entity.enums.CarState;
 import com.example.backend.entity.enums.ContractStatus;
 import com.example.backend.entity.enums.PaymentStatus;
 import com.example.backend.entity.enums.ReturnCarStatus;
@@ -61,6 +62,8 @@ public class ContractInit implements CommandLineRunner {
                 boolean isSuccess = random.nextBoolean();
                 if (isSuccess) {
                     contract.setPaymentStatus(PaymentStatus.SUCCESS);
+                    car.setState(CarState.RENTED);
+                    carRepository.save(car);
                     ReturnCarStatus[] possibleStatuses = {
                             ReturnCarStatus.NOT_RETURNED,
                             ReturnCarStatus.INTACT,
