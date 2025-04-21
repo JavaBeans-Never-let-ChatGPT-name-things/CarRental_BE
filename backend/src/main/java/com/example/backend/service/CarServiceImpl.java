@@ -7,6 +7,7 @@ import com.example.backend.repository.CarRepository;
 import com.example.backend.repository.ContractRepository;
 import com.example.backend.repository.ReviewRepository;
 import com.example.backend.service.dto.CarDTO;
+import com.example.backend.service.dto.ReviewDTO;
 import com.example.backend.service.dto.request.CarPageRequestDTO;
 import com.example.backend.service.mapper.CarMapper;
 import lombok.RequiredArgsConstructor;
@@ -74,7 +75,7 @@ public class CarServiceImpl implements CarService{
     }
 
     @Override
-    public List<ReviewEntity> findReviewsById(String id) {
+    public List<ReviewDTO> findReviewsById(String id) {
         List<RentalContractEntity> rentalContracts = contractRepository.findAllByCar_Id(id);
         if (rentalContracts != null && !rentalContracts.isEmpty()) {
             List<Long> reviewIds = rentalContracts.stream()
@@ -82,8 +83,21 @@ public class CarServiceImpl implements CarService{
                     .filter(Objects::nonNull)
                     .map(ReviewEntity::getId)
                     .toList();
-                return reviewRepository.findAllById(reviewIds);
+                return reviewRepository.findAllById(reviewIds)
+                        .stream()
+                        .map(review -> ReviewDTO.builder()
+                                .comment(review.getComment())
+                                .starsNum(review.getStarsNum())
+                                .accountDisplayName(review.getAccount().getDisplayName())
+                                .avatarUrl(review.getAccount().getAvatarUrl())
+                                .build())
+                        .toList();
         }
         return List.of();
+    }
+
+    @Override
+    public CarDTO findById(String id) {
+        return carRepository.findById(id).map(carMapper::toDto).orElse(CarDTO.builder().build());
     }
 }

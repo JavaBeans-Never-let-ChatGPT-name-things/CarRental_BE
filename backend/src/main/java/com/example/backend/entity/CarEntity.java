@@ -53,6 +53,12 @@ public class CarEntity extends AbstractAuditing<String> {
     @Column(name = "reviews_num")
     int reviewsNum;
 
+    @Column(name = "gear_type", nullable = false)
+    String gearType;
+
+    @Column(name = "drive", nullable = false)
+    String drive;
+
     @OneToMany(mappedBy = "car",
             cascade = {CascadeType.DETACH, CascadeType.MERGE, CascadeType.PERSIST, CascadeType.REFRESH},
             fetch = FetchType.LAZY)

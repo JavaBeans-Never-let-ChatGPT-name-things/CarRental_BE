@@ -10,6 +10,7 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
+import java.util.Optional;
 
 @Repository
 public interface CarRepository extends JpaRepository<CarEntity, String> {
@@ -44,4 +45,6 @@ public interface CarRepository extends JpaRepository<CarEntity, String> {
             nativeQuery = true
     )
     Long countById(@Param("id") String id);
+
+    Optional<CarEntity> findCarById(String id);
 }

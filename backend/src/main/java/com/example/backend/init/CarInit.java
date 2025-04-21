@@ -67,13 +67,9 @@ public class CarInit implements CommandLineRunner {
             List<String> teslaCars = List.of("Tesla Model S", "Tesla Model 3", "Tesla Model X", "Tesla Model Y", "Tesla Cybertruck");
             List<String> ferrariCars = List.of("Ferrari F8 Tributo", "Ferrari 488 GTB", "Ferrari Portofino", "Ferrari GTC4Lusso", "Ferrari 812 Superfast", "Ferrari LaFerrari", "Ferrari Roma");
             List<String> landRoverCars = List.of("Land Rover Range Rover", "Land Rover Range Rover Sport", "Land Rover Discovery", "Land Rover Defender", "Land Rover Velar", "Land Rover Evoque");
-
             List<List<String>> carLists = List.of(audiCars, bmwCars, chevroletCars, fordCars, mercedesCars, teslaCars, ferrariCars, landRoverCars);
             List<CarBrandEntity> carBrands = carBrandRepository.findAll();
             Random random = new Random();
-
-
-
             for (int i = 0; i < carLists.size(); i++) {
                 List<String> cars = carLists.get(i);
                 CarBrandEntity brand = carBrands.get(i);
@@ -90,6 +86,8 @@ public class CarInit implements CommandLineRunner {
                             .seatsNumber(2 + random.nextInt(5))
                             .rentalPrice(Math.round((50 + random.nextFloat() * 450) * 100f) / 100f)
                             .engineType(random.nextBoolean() ? "Petrol" : "Electric")
+                            .gearType(random.nextBoolean() ? "Manual" : "Automatic")
+                            .drive(random.nextBoolean() ? "FWD (R4)" : "AWD (R4)")
                             .rating(0f)
                             .reviewsNum(0)
                             .build();
@@ -99,9 +97,7 @@ public class CarInit implements CommandLineRunner {
                 }
 
             }
-
             log.info("Car data initialized");
-
         }
     }
 }

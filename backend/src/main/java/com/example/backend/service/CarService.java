@@ -1,7 +1,7 @@
 package com.example.backend.service;
 
-import com.example.backend.entity.ReviewEntity;
 import com.example.backend.service.dto.CarDTO;
+import com.example.backend.service.dto.ReviewDTO;
 import com.example.backend.service.dto.request.CarPageRequestDTO;
 import org.springframework.data.domain.Page;
 
@@ -16,5 +16,7 @@ public interface CarService {
     Page<CarDTO> findAllWithPagination(CarPageRequestDTO carPageRequestDTO);
     Page<CarDTO> findByIdWithPaginationAndFilter(CarPageRequestDTO carPageRequestDTO, String id);
     Page<CarDTO> findByBrandIdWithPagination(CarPageRequestDTO carPageRequestDTO, Long brandId);
-    List<ReviewEntity> findReviewsById(String id);
+    List<ReviewDTO> findReviewsById(String id);
+
+    CarDTO findById(String id);
 }
