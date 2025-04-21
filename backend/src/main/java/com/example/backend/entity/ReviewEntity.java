@@ -25,4 +25,10 @@ public class ReviewEntity extends AbstractAuditing<Long>{
     @Column(name = "comment")
     @Lob
     String comment;
+
+    @ManyToOne(cascade = {CascadeType.PERSIST, CascadeType.MERGE, CascadeType.REFRESH, CascadeType.DETACH},
+            fetch = FetchType.LAZY)
+    @JsonIgnore
+    @JoinColumn(name = "account_id")
+    AccountEntity account;
 }

@@ -150,6 +150,10 @@ public class AccountServiceImpl implements AccountService{
         RentalContractEntity rentalContractEntity = contractRepository.findById(rentalContractId).orElseThrow(
                 () -> new RuntimeException("Rental contract not found")
         );
+        AccountEntity account = accountRepository.findById(rentalContractEntity.getAccount().getId()).orElseThrow(
+                () -> new RuntimeException("Account not found")
+        );
+        entity.setAccount(account);
         CarEntity car = carRepository.findById(rentalContractEntity.getCar().getId()).orElseThrow(
                 () -> new RuntimeException("Car not found")
         );

@@ -5,6 +5,7 @@ import com.example.backend.entity.ReviewEntity;
 import com.example.backend.service.CarBrandService;
 import com.example.backend.service.CarService;
 import com.example.backend.service.dto.CarDTO;
+import com.example.backend.service.dto.ReviewDTO;
 import com.example.backend.service.dto.request.CarPageRequestDTO;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -56,7 +57,12 @@ public class CarController {
     }
 
     @GetMapping("/reviews/{carId}")
-    public List<ReviewEntity> findById(@PathVariable("carId") String id) {
+    public List<ReviewDTO> findAllReviewsById(@PathVariable("carId") String id) {
         return carService.findReviewsById(id);
+    }
+
+    @GetMapping("/{carId}")
+    public CarDTO findCarById(@PathVariable("carId") String id) {
+        return carService.findById(id);
     }
 }
