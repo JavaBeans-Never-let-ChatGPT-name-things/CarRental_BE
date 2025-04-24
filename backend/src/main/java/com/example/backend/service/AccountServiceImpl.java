@@ -19,26 +19,36 @@ import com.example.backend.service.mapper.CarMapper;
 import com.example.backend.service.mapper.ContractRequestMapper;
 import com.example.backend.service.mapper.RentalContractMapper;
 import lombok.RequiredArgsConstructor;
+import lombok.experimental.FieldDefaults;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import java.io.IOException;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 
 @Slf4j
 @RequiredArgsConstructor
 @Service
+@FieldDefaults(makeFinal = true)
 public class AccountServiceImpl implements AccountService{
-    private final AccountRepository accountRepository;
-    private final CarRepository carRepository;
-    private final AccountMapper accountMapper;
-    private final CarMapper carMapper;
-    private final JwtService jwtService;
-    private final CloudinaryService cloudinaryService;
-    private final ContractRequestMapper contractRequestMapper;
-    private final ContractRepository contractRepository;
-    private final RentalContractMapper rentalContractMapper;
+    private AccountRepository accountRepository;
+    private CarRepository carRepository;
+    private AccountMapper accountMapper;
+    private CarMapper carMapper;
+    private JwtService jwtService;
+    private CloudinaryService cloudinaryService;
+    private ContractRepository contractRepository;
+    private RentalContractMapper rentalContractMapper;
+    private ContractRequestMapper contractRequestMapper;
+    public static Map<Long, String> pendingPayments = new ConcurrentHashMap<>();
+    public static ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(1);
+    private PayOsService payOsService;
     @Override
     public Optional<AccountDTO> findByUsername(String token) {
         String username = jwtService.extractUserName(token);
@@ -109,7 +119,7 @@ public class AccountServiceImpl implements AccountService{
     }
 
     @Override
-    public void rentCar(ContractRequestDTO contractRequestDTO, String token, String carId) {
+    public Long rentCar(ContractRequestDTO contractRequestDTO, String token, String carId) {
         String username = jwtService.extractUserName(token);
         if (username != null) {
             AccountEntity accountEntity = accountRepository.findByUsername(username).orElseThrow(
@@ -128,8 +138,18 @@ public class AccountServiceImpl implements AccountService{
             rentalContractEntity.setAccount(accountEntity);
             rentalContractEntity.setCar(carEntity);
             carEntity.setState(CarState.RENTED);
-            contractRepository.save(rentalContractEntity);
+
+            Long result = contractRepository.save(rentalContractEntity).getId();
+            pendingPayments.put(result, carId);
+            scheduler.schedule(() -> {
+                if (pendingPayments.containsKey(result)) {
+                    payOsService.paymentFailed(carId);
+                }
+            }, 5, TimeUnit.MINUTES);
+
+            return result;
         }
+        throw new RuntimeException("Token is invalid");
     }
 
     @Override

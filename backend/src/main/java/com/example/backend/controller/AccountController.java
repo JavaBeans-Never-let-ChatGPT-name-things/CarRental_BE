@@ -89,11 +89,10 @@ public class AccountController {
             return ResponseEntity.badRequest().body(Map.of("message","Token is missing or invalid"));
         }
         try {
-            accountService.rentCar(contract, token, carId);
+            return ResponseEntity.ok().body(accountService.rentCar(contract, token, carId));
         } catch (RuntimeException e) {
             return ResponseEntity.badRequest().body(Map.of("message", e.getMessage()));
         }
-        return ResponseEntity.ok(Map.of("message", "Car rented successfully"));
     }
 
     @GetMapping("/rentalContracts")
