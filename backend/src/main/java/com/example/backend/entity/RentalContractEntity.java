@@ -51,6 +51,7 @@ public class RentalContractEntity extends AbstractAuditing<Long> {
     float totalPrice;
 
     @Column(name = "return_car_status")
+    @Enumerated(EnumType.STRING)
     ReturnCarStatus returnCarStatus;
 
     @Column(name = "return_date")
