@@ -49,7 +49,7 @@ public class SecurityConfig {
         return http.csrf(AbstractHttpConfigurer::disable)
                 .authorizeHttpRequests(request -> request
                         .requestMatchers(PUBLIC_ENDPOINTS).permitAll()
-                        .requestMatchers(HttpMethod.GET, "/test/admin")
+                        .requestMatchers(HttpMethod.POST, "notifications/send/**")
                         .hasAuthority("ADMIN")
                         .anyRequest().authenticated()
                 )
