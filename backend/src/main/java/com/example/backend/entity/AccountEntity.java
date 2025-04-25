@@ -95,4 +95,12 @@ public class AccountEntity extends AbstractAuditing<Long>{
     public void removeFavouriteCar(CarEntity car) {
         favouriteCars.remove(car);
     }
+
+    @OneToMany(mappedBy = "user",
+            cascade = CascadeType.ALL,
+            fetch = FetchType.LAZY)
+    List<FCMTokenEntity> fcmTokens = new ArrayList<>();
+    public void addFCMToken(FCMTokenEntity token) {
+        fcmTokens.add(token);
+    }
 }
