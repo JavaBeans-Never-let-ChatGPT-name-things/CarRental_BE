@@ -1,5 +1,6 @@
 package com.example.backend.entity;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
@@ -14,6 +15,7 @@ import lombok.experimental.FieldDefaults;
 @FieldDefaults(level = AccessLevel.PRIVATE)
 public class NotificationEntity extends AbstractAuditing<Long> {
     @Id
+    @JsonIgnore
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     Long id;
 
@@ -26,7 +28,11 @@ public class NotificationEntity extends AbstractAuditing<Long> {
     @Column(name = "is_read", nullable = false)
     Boolean isRead = false;
 
+    @Column(name = "image_url", columnDefinition = "TEXT")
+    String imageUrl;
+
     @ManyToOne
+    @JsonIgnore
     @JoinColumn(name = "account_id", nullable = false)
     AccountEntity account;
 }

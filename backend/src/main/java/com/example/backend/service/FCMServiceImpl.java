@@ -16,6 +16,7 @@ import java.util.List;
 @RequiredArgsConstructor
 @Slf4j
 public class FCMServiceImpl implements FCMService{
+    NotificationRepository notificationRepository;
     FCMRepository fcmTokenRepository;
     AccountRepository accountRepository;
     ContractRepository contractRepository;
@@ -81,11 +82,33 @@ public class FCMServiceImpl implements FCMService{
                 .title(notificationFCMRequest.getTitle())
                 .message(notificationFCMRequest.getBody())
                 .isRead(false)
+                .imageUrl(car.getCarImageUrl())
                 .account(account)
                 .build();
         account.addNotification(notificationEntity);
         accountRepository.save(account);
         log.info("Notification saved successfully");
         return "Successfully sent notification to user with ID: " + userId;
+    }
+
+    @Override
+    public List<NotificationEntity> getNotifications(String token) {
+        String username = jwtService.extractUserName(token);
+        AccountEntity account = accountRepository.findByUsername(username)
+                .orElseThrow(() -> new RuntimeException("Account not found"));
+        return notificationRepository.findByAccountId(account.getId());
+    }
+
+    @Override
+    public String markAllNotificationAsRead(String token) {
+        String username = jwtService.extractUserName(token);
+        AccountEntity account = accountRepository.findByUsername(username)
+                .orElseThrow(() -> new RuntimeException("Account not found"));
+        List<NotificationEntity> notifications = notificationRepository.findByAccountId(account.getId());
+        for (NotificationEntity notification : notifications) {
+            notification.setIsRead(true);
+            notificationRepository.save(notification);
+        }
+        return "All notifications marked as read";
     }
 }

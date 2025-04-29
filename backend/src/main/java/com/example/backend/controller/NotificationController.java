@@ -1,10 +1,15 @@
 package com.example.backend.controller;
 
+import com.example.backend.entity.NotificationEntity;
 import com.example.backend.service.FCMService;
 import com.example.backend.service.dto.request.NotificationFCMRequest;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
+import java.util.Map;
 
 
 @RestController
@@ -26,5 +31,23 @@ public class NotificationController {
                                    @PathVariable Long contractId,
                                    @RequestBody NotificationFCMRequest notificationFCMRequest) {
         return fcmService.sendNotification(userId, contractId, notificationFCMRequest);
+    }
+
+    @GetMapping("/get")
+    public List<NotificationEntity> getNotifications(HttpServletRequest request) {
+        String token = request.getHeader("Authorization");
+        if (token != null && token.startsWith("Bearer ")) {
+            token = token.substring(7);
+        }
+        return fcmService.getNotifications(token);
+    }
+
+    @PostMapping("/readAll")
+    public ResponseEntity<?> markAllNotificationAsRead(HttpServletRequest request) {
+        String token = request.getHeader("Authorization");
+        if (token != null && token.startsWith("Bearer ")) {
+            token = token.substring(7);
+        }
+        return ResponseEntity.ok().body(Map.of("message", fcmService.markAllNotificationAsRead(token)));
     }
 }
