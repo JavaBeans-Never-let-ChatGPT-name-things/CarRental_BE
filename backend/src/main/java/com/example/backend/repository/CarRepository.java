@@ -46,5 +46,12 @@ public interface CarRepository extends JpaRepository<CarEntity, String> {
     )
     Long countById(@Param("id") String id);
 
-    Optional<CarEntity> findCarById(String id);
+    @Query(
+            value = "SELECT c.* FROM cars c " +
+                    "JOIN rental_contracts rc ON c.id = rc.car_id " +
+                    "WHERE rc.id = :contractId",
+            nativeQuery = true
+    )
+    Optional<CarEntity> findByContractId(@Param("contractId") Long contractId);
+
 }

@@ -18,7 +18,7 @@ public class BackendApplication {
     @Bean
     FirebaseMessaging firebaseMessaging() throws Exception {
         GoogleCredentials googleCredentials = GoogleCredentials
-                .fromStream(new ClassPathResource("gosafe-carrental-firebase-adminsdk-fbsvc-212d4ef31d.json").getInputStream());
+                .fromStream(new ClassPathResource("carrental-62623-firebase-adminsdk-fbsvc-e4986a1484.json").getInputStream());
         FirebaseOptions firebaseOptions = FirebaseOptions.builder()
                 .setCredentials(googleCredentials)
                 .build();

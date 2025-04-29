@@ -1,7 +1,6 @@
 package com.example.backend.controller;
 
 import com.example.backend.service.FCMService;
-import com.example.backend.service.FirebaseMessagingService;
 import com.example.backend.service.dto.request.NotificationFCMRequest;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
@@ -22,8 +21,10 @@ public class NotificationController {
         return fcmService.findFCMTokenByToken(token, fcmToken);
     }
 
-    @PostMapping("/send/{userId}")
-    public String sendNotification(@PathVariable Long userId, @RequestBody NotificationFCMRequest notificationRequest) {
-        return fcmService.sendNotification(userId, notificationRequest);
+    @PostMapping("/send/{userId}/{contractId}")
+    public String sendNotification(@PathVariable Long userId,
+                                   @PathVariable Long contractId,
+                                   @RequestBody NotificationFCMRequest notificationFCMRequest) {
+        return fcmService.sendNotification(userId, contractId, notificationFCMRequest);
     }
 }

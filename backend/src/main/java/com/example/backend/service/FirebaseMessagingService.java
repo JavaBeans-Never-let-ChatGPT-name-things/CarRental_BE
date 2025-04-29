@@ -16,6 +16,7 @@ public class FirebaseMessagingService {
         Notification notification = Notification.builder()
                 .setBody(notificationRequest.getBody())
                 .setTitle(notificationRequest.getTitle())
+                .setImage(notificationRequest.getImage())
                 .build();
         Message message = Message.builder()
                 .setToken(notificationRequest.getToken())

@@ -1,9 +1,7 @@
 package com.example.backend.service;
 
-import com.example.backend.entity.AccountEntity;
-import com.example.backend.entity.FCMTokenEntity;
-import com.example.backend.repository.AccountRepository;
-import com.example.backend.repository.FCMRepository;
+import com.example.backend.entity.*;
+import com.example.backend.repository.*;
 import com.example.backend.service.dto.request.NotificationFCMRequest;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
@@ -20,6 +18,8 @@ import java.util.List;
 public class FCMServiceImpl implements FCMService{
     FCMRepository fcmTokenRepository;
     AccountRepository accountRepository;
+    ContractRepository contractRepository;
+    CarRepository carRepository;
     JwtService jwtService;
     FirebaseMessagingService firebaseMessagingService;
     @Override
@@ -51,21 +51,41 @@ public class FCMServiceImpl implements FCMService{
     }
 
     @Override
-    public String sendNotification(Long userId, NotificationFCMRequest notificationRequest) {
+    public String sendNotification(Long userId, Long contractId, NotificationFCMRequest notificationFCMRequest) {
         List<FCMTokenEntity> fcmTokenEntities = fcmTokenRepository.findAllByUserId(userId);
+        AccountEntity account = accountRepository.findById(userId)
+                .orElseThrow(() -> new RuntimeException("Account not found"));
         if (fcmTokenEntities.isEmpty()) {
             return "No tokens found for user";
         }
+        RentalContractEntity rentalContract = contractRepository.findById(contractId)
+                .orElseThrow(() -> new RuntimeException("Rental contract not found"));
+        List<RentalContractEntity> rentalContracts = account.getRentalContracts();
+        if (!rentalContracts.contains(rentalContract)){
+            return "User does not own this rental contract";
+        }
+        CarEntity car = carRepository.findByContractId(contractId)
+                .orElseThrow(() -> new RuntimeException("Car not found"));
+        notificationFCMRequest.setImage(car.getCarImageUrl());
         for (FCMTokenEntity fcmTokenEntity : fcmTokenEntities) {
             String token = fcmTokenEntity.getToken();
-            notificationRequest.setToken(token);
+            notificationFCMRequest.setToken(token);
             log.info("Sending notification to token: {}", token);
-            log.info("Notification request: {}", notificationRequest);
-            String result = firebaseMessagingService.sendNotification(notificationRequest);
+            log.info("Notification request: {}", notificationFCMRequest);
+            String result = firebaseMessagingService.sendNotification(notificationFCMRequest);
             if (!result.equals("Notification sent successfully")) {
-                return result;
+                log.info("Failed to send notification due to: {}", result);
             }
         }
+        NotificationEntity notificationEntity = NotificationEntity.builder()
+                .title(notificationFCMRequest.getTitle())
+                .message(notificationFCMRequest.getBody())
+                .isRead(false)
+                .account(account)
+                .build();
+        account.addNotification(notificationEntity);
+        accountRepository.save(account);
+        log.info("Notification saved successfully");
         return "Successfully sent notification to user with ID: " + userId;
     }
 }
