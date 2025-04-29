@@ -74,7 +74,7 @@ public class AccountEntity extends AbstractAuditing<Long>{
         rentalContracts.add(contract);
     }
 
-    @OneToMany(mappedBy = "account_notification"
+    @OneToMany(mappedBy = "account"
             ,cascade = CascadeType.ALL,
             fetch = FetchType.LAZY)
     List<NotificationEntity> notifications = new ArrayList<>();
