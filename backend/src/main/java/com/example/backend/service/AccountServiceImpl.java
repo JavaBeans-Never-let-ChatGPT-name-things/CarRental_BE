@@ -176,14 +176,12 @@ public class AccountServiceImpl implements AccountService{
         CarEntity car = carRepository.findById(rentalContractEntity.getCar().getId()).orElseThrow(
                 () -> new RuntimeException("Car not found")
         );
-        if (car.getState() != CarState.RENTED) {
-            throw new RuntimeException("Car is not rented");
-        }
         int star = entity.getStarsNum();
         float currentRating = car.getRating() * car.getReviewsNum();
         car.setReviewsNum(car.getReviewsNum() + 1);
         car.setRating((currentRating + star) / car.getReviewsNum());
         carRepository.save(car);
+        rentalContractEntity.setContractStatus(ContractStatus.REVIEWED);
         rentalContractEntity.setReview(entity);
         contractRepository.save(rentalContractEntity);
     }

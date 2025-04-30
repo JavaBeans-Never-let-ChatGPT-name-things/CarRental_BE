@@ -2,6 +2,7 @@ package com.example.backend.controller;
 
 import com.example.backend.entity.ReviewEntity;
 import com.example.backend.service.AccountService;
+import com.example.backend.service.ContractService;
 import com.example.backend.service.dto.CarDTO;
 import com.example.backend.service.dto.RentalContractDTO;
 import com.example.backend.service.dto.request.ContractRequestDTO;
@@ -21,6 +22,7 @@ import java.util.Map;
 @RequestMapping("/accounts")
 public class AccountController {
     private final AccountService accountService;
+    private final ContractService contractService;
     @GetMapping
     public ResponseEntity<?> getAccountInfoByToken(HttpServletRequest request){
         String token = extractToken(request);
@@ -113,5 +115,18 @@ public class AccountController {
             return ResponseEntity.badRequest().body(Map.of("message", e.getMessage()));
         }
         return ResponseEntity.ok(Map.of("message", "Review added successfully"));
+    }
+
+    @PostMapping("/rentalContracts/retry/{contractId}")
+    public ResponseEntity<?> retryRentalContract(@PathVariable("contractId") Long contractId, HttpServletRequest request) {
+        String token = extractToken(request);
+        if (token == null || token.isEmpty()) {
+            return ResponseEntity.badRequest().body(Map.of("message","Token is missing or invalid"));
+        }
+        try {
+            return ResponseEntity.ok().body(Map.of("message", contractService.retryContract(contractId, token)));
+        } catch (RuntimeException e) {
+            return ResponseEntity.badRequest().body(Map.of("message", e.getMessage()));
+        }
     }
 }

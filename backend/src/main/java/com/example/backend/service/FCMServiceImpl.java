@@ -20,7 +20,6 @@ public class FCMServiceImpl implements FCMService{
     FCMRepository fcmTokenRepository;
     AccountRepository accountRepository;
     ContractRepository contractRepository;
-    CarRepository carRepository;
     JwtService jwtService;
     FirebaseMessagingService firebaseMessagingService;
     @Override
@@ -65,8 +64,7 @@ public class FCMServiceImpl implements FCMService{
         if (!rentalContracts.contains(rentalContract)){
             return "User does not own this rental contract";
         }
-        CarEntity car = carRepository.findByContractId(contractId)
-                .orElseThrow(() -> new RuntimeException("Car not found"));
+        CarEntity car = rentalContract.getCar();
         notificationFCMRequest.setImage(car.getCarImageUrl());
         for (FCMTokenEntity fcmTokenEntity : fcmTokenEntities) {
             String token = fcmTokenEntity.getToken();
