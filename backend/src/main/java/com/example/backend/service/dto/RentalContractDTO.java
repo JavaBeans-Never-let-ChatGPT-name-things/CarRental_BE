@@ -1,6 +1,7 @@
 package com.example.backend.service.dto;
 
 import com.example.backend.entity.enums.ContractStatus;
+import com.example.backend.entity.enums.PaymentStatus;
 import lombok.AccessLevel;
 import lombok.Data;
 import lombok.experimental.FieldDefaults;
@@ -18,6 +19,7 @@ public class RentalContractDTO {
     LocalDate endDate;
     Instant contractDate;
     ContractStatus contractStatus;
+    PaymentStatus paymentStatus;
     float deposit;
     float totalPrice;
 }

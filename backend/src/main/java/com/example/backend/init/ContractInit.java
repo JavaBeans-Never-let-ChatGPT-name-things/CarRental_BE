@@ -51,8 +51,8 @@ public class ContractInit implements CommandLineRunner {
                 contract.setAccount(account);
                 contract.setCar(car);
 
-                LocalDate startDate = LocalDate.now().minusDays(10 + i);
-                LocalDate endDate = LocalDate.now().plusDays(100 + i);
+                LocalDate startDate = LocalDate.now().plusDays(1);
+                LocalDate endDate = LocalDate.now().plusDays(2);
 
                 contract.setStartDate(startDate);
                 contract.setContractStatus(ContractStatus.BOOKED);
