@@ -16,8 +16,15 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
+import java.time.Duration;
+import java.time.Instant;
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 
 @Service
 @RequiredArgsConstructor
@@ -29,8 +36,11 @@ public class ContractServiceImpl implements ContractService{
     FCMRepository fcmRepository;
     FirebaseMessagingService firebaseMessagingService;
     AccountRepository accountRepository;
+    PayOsService payOsService;
+    Map<Long, String> pendingPayments = new ConcurrentHashMap<>();
+    ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(1);
     @Override
-    public String retryContract(Long contractId, String token) {
+    public String retryContractSuccess(Long contractId, String token) {
         String username = jwtService.extractUserName(token);
         RentalContractEntity rentalContractEntity = contractRepository.findById(contractId)
                 .orElseThrow( () -> new RuntimeException("Contract not found"));
@@ -38,10 +48,6 @@ public class ContractServiceImpl implements ContractService{
         if (rentalContractEntity.getPaymentStatus().equals(PaymentStatus.SUCCESS))
         {
             return "Contract's already done";
-        }
-        if (!carEntity.getState().equals(CarState.AVAILABLE))
-        {
-            return "Car is unavailable";
         }
         if (!username.equals(rentalContractEntity.getAccount().getUsername()))
         {
@@ -55,6 +61,44 @@ public class ContractServiceImpl implements ContractService{
         carEntity.setState(CarState.RENTED);
         contractRepository.save(rentalContractEntity);
         return "Successfully paid for contract id: " + rentalContractEntity.getId();
+    }
+
+    @Override
+    public String retryContract(Long contractId, String token) {
+        String username = jwtService.extractUserName(token);
+        RentalContractEntity rentalContractEntity = contractRepository.findById(contractId)
+                .orElseThrow( () -> new RuntimeException("Contract not found"));
+        CarEntity carEntity = rentalContractEntity.getCar();
+        if (!carEntity.getState().equals(CarState.AVAILABLE))
+        {
+            return "Car is unavailable";
+        }
+        if (!username.equals(rentalContractEntity.getAccount().getUsername()))
+        {
+            return "You are not the owner of this contract";
+        }
+        if (rentalContractEntity.getContractStatus().equals(ContractStatus.EXPIRED))
+        {
+            return "Contract is expired";
+        }
+        if (rentalContractEntity.getRetryCountLeft() == 0 ){
+            return "You have no retry left";
+        }
+        Instant now = Instant.now();
+        if (rentalContractEntity.getLastRetryAt() != null && Duration.between(rentalContractEntity.getLastRetryAt(), now).toMinutes() < 5) {
+            return "Please wait 5 minutes before retrying";
+        }
+        rentalContractEntity.setRetryCountLeft(rentalContractEntity.getRetryCountLeft() - 1);
+        rentalContractEntity.setLastRetryAt(now);
+        carEntity.setState(CarState.RENTED);
+        contractRepository.save(rentalContractEntity);
+        pendingPayments.put(rentalContractEntity.getId(), carEntity.getId());
+        scheduler.schedule(() -> {
+            if (pendingPayments.containsKey(rentalContractEntity.getId())) {
+                payOsService.paymentFailed(carEntity.getId());
+            }
+        }, 5, TimeUnit.MINUTES);
+        return "Successfully holded for contract id: " + rentalContractEntity.getId();
     }
 
     @Scheduled(cron = "0 0 0 * * ?")
