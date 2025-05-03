@@ -7,6 +7,7 @@ import jakarta.persistence.*;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
 
+import java.time.Instant;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
@@ -59,6 +60,12 @@ public class RentalContractEntity extends AbstractAuditing<Long> {
 
     @Column(name = "penalty_fee")
     float penaltyFee;
+
+    @Column(name = "last_retry_at")
+    Instant lastRetryAt;
+
+    @Column(name = "retry_count_left")
+    int retryCountLeft = 3;
 
     @Column(name = "contract_status")
     @Enumerated(EnumType.STRING)
