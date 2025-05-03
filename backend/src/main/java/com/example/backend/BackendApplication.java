@@ -10,9 +10,11 @@ import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.context.annotation.Bean;
 import org.springframework.core.io.ClassPathResource;
+import org.springframework.scheduling.annotation.EnableScheduling;
 
 @SpringBootApplication
 @OpenAPIDefinition(info = @Info(title = "API Documentation", version = "1.0", description = "API Information"))
+@EnableScheduling
 public class BackendApplication {
 
     @Bean
