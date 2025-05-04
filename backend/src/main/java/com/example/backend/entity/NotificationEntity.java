@@ -31,7 +31,7 @@ public class NotificationEntity extends AbstractAuditing<Long> {
     @Column(name = "image_url", columnDefinition = "TEXT")
     String imageUrl;
 
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.EAGER, cascade = {CascadeType.PERSIST, CascadeType.MERGE, CascadeType.REFRESH, CascadeType.DETACH})
     @JsonIgnore
     @JoinColumn(name = "account_id", nullable = false)
     AccountEntity account;

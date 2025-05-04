@@ -5,14 +5,16 @@ import com.example.backend.entity.enums.CarState;
 import com.example.backend.entity.enums.ContractStatus;
 import com.example.backend.entity.enums.PaymentStatus;
 import com.example.backend.entity.enums.ReturnCarStatus;
-import com.example.backend.repository.AccountRepository;
 import com.example.backend.repository.ContractRepository;
 import com.example.backend.repository.FCMRepository;
+import com.example.backend.repository.NotificationRepository;
 import com.example.backend.service.dto.request.NotificationFCMRequest;
+import jakarta.transaction.Transactional;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.core.annotation.Order;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
@@ -30,15 +32,17 @@ import java.util.concurrent.TimeUnit;
 @RequiredArgsConstructor
 @FieldDefaults(makeFinal = true, level = AccessLevel.PRIVATE)
 @Slf4j
+@Order(100)
 public class ContractServiceImpl implements ContractService{
     ContractRepository contractRepository;
     JwtService jwtService;
     FCMRepository fcmRepository;
     FirebaseMessagingService firebaseMessagingService;
-    AccountRepository accountRepository;
     PayOsService payOsService;
     Map<Long, String> pendingPayments = new ConcurrentHashMap<>();
     ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(1);
+    NotificationRepository notificationRepository;
+
     @Override
     public String retryContractSuccess(Long contractId, String token) {
         String username = jwtService.extractUserName(token);
@@ -102,10 +106,14 @@ public class ContractServiceImpl implements ContractService{
     }
 
     @Scheduled(cron = "0 0 0 * * ?")
+    @Transactional
     public void updateContractsStatus() {
         LocalDate currentDate = LocalDate.now();
+        log.info("Running scheduled task: updateContractsStatus");
         List<RentalContractEntity> contracts = contractRepository.findAll();
         for (RentalContractEntity contract: contracts) {
+            log.info("Checking contract ID {} with status {}", contract.getId(), contract.getContractStatus());
+            log.info("Start date: {}, End date: {}, Return date: {}", contract.getStartDate(), contract.getEndDate(), contract.getReturnDate());
             if (contract.getContractStatus().equals(ContractStatus.BOOKED)
              && contract.getStartDate().isBefore(currentDate)
              && contract.getPaymentStatus().equals(PaymentStatus.SUCCESS)){
@@ -113,22 +121,28 @@ public class ContractServiceImpl implements ContractService{
                 contract.getCar().setState(CarState.AVAILABLE);
                 contractRepository.save(contract);
                 log.info("Contract {} has expired", contract.getId());
-                sendNotification(contract.getId(), contract.getCar().getCarImageUrl(), contract.getAccount(), ContractStatus.EXPIRED);
+                sendNotification(contract.getId(), contract.getCar().getCarImageUrl(), contract.getAccount(), ContractStatus.EXPIRED, 0);
             }
-            if (contract.getContractStatus().equals(ContractStatus.COMPLETE)
+            if (contract.getContractStatus().equals(ContractStatus.PICKED_UP)
             && contract.getEndDate().isBefore(currentDate)
             && contract.getReturnDate()==null){
                 contract.setContractStatus(ContractStatus.OVERDUE);
-                contract.getCar().setState(CarState.AVAILABLE);
                 contract.setReturnCarStatus(ReturnCarStatus.NOT_RETURNED);
+                sendNotification(contract.getId(), contract.getCar().getCarImageUrl(), contract.getAccount(), ContractStatus.OVERDUE, contract.getPenaltyFee());
+                contract.setPenaltyFee(contract.getPenaltyFee() + 100);
                 contractRepository.save(contract);
                 log.info("Contract {} is overdue", contract.getId());
-                sendNotification(contract.getId(), contract.getCar().getCarImageUrl(), contract.getAccount(), ContractStatus.OVERDUE);
+            }
+            if (contract.getContractStatus().equals(ContractStatus.OVERDUE)) {
+                contract.setPenaltyFee(contract.getPenaltyFee() + 100);
+                contractRepository.save(contract);
+                log.info("Contract {} is still overdue", contract.getId());
+                sendNotification(contract.getId(), contract.getCar().getCarImageUrl(), contract.getAccount(), ContractStatus.OVERDUE, contract.getPenaltyFee());
             }
         }
     }
 
-    private void sendNotification(Long contractId, String carImage, AccountEntity account, ContractStatus contractStatus){
+    private void sendNotification(Long contractId, String carImage, AccountEntity account, ContractStatus contractStatus, float penaltyFee) {
         List<FCMTokenEntity> fcmTokenList = fcmRepository.findAllByUserId(account.getId());
         if (fcmTokenList.isEmpty()) {
             log.info("No tokens found for user");
@@ -139,8 +153,12 @@ public class ContractServiceImpl implements ContractService{
         if (contractStatus.equals(ContractStatus.EXPIRED)){
             notificationFCMRequest.setBody("Your contract has expired");
         }
-        else if (contractStatus.equals(ContractStatus.OVERDUE)){
-            notificationFCMRequest.setBody("Your contract is overdue, please return the car. And penalty fee will be applied from today");
+        else if (contractStatus.equals(ContractStatus.OVERDUE) && penaltyFee == 0){
+            notificationFCMRequest.setBody("Your contract is overdue, please return the car. Penalty fee will be applied from today." +
+                    " Current Penalty fee: " + penaltyFee);
+        }
+        else if (contractStatus.equals(ContractStatus.OVERDUE) && penaltyFee > 0){
+            notificationFCMRequest.setBody("Your contract is overdue, please return the car. Current Penalty fee: " + penaltyFee);
         }
         notificationFCMRequest.setImage(carImage);
         for (FCMTokenEntity fcmTokenEntity : fcmTokenList) {
@@ -159,8 +177,7 @@ public class ContractServiceImpl implements ContractService{
                 .imageUrl(carImage)
                 .account(account)
                 .build();
-        account.addNotification(notificationEntity);
-        accountRepository.save(account);
+        notificationRepository.save(notificationEntity);
         log.info("Notification saved successfully");
     }
 }
