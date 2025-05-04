@@ -5,6 +5,7 @@ import com.example.backend.entity.CarEntity;
 import com.example.backend.entity.RentalContractEntity;
 import com.example.backend.entity.ReviewEntity;
 import com.example.backend.entity.enums.CarState;
+import com.example.backend.entity.enums.ContractStatus;
 import com.example.backend.entity.enums.PaymentStatus;
 import com.example.backend.repository.AccountRepository;
 import com.example.backend.repository.CarRepository;
@@ -47,7 +48,7 @@ public class ReviewInit implements CommandLineRunner {
 
             List<RentalContractEntity> successfulContracts = contractRepository.findAll()
                     .stream()
-                    .filter(contract -> contract.getPaymentStatus() == PaymentStatus.SUCCESS)
+                    .filter(contract -> contract.getContractStatus().equals(ContractStatus.COMPLETE))
                     .toList();
             Random random = new Random();
 
