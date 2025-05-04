@@ -129,4 +129,17 @@ public class AccountController {
             return ResponseEntity.badRequest().body(Map.of("message", e.getMessage()));
         }
     }
+
+    @PostMapping("/rentalContracts/retrySuccess/{contractId}")
+    public ResponseEntity<?> retrySuccess(@PathVariable("contractId") Long contractId, HttpServletRequest request) {
+        String token = extractToken(request);
+        if (token == null || token.isEmpty()) {
+            return ResponseEntity.ok().body(Map.of("message","Token is missing or invalid"));
+        }
+        try {
+            return ResponseEntity.ok().body(Map.of("message", contractService.retryContractSuccess(contractId, token)));
+        } catch (RuntimeException e) {
+            return ResponseEntity.ok().body(Map.of("message", e.getMessage()));
+        }
+    }
 }
