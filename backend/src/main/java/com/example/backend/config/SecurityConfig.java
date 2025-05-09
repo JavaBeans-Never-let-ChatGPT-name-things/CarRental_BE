@@ -40,6 +40,10 @@ public class SecurityConfig {
             "/swagger-ui.html",
             "/webjars/**"
     };
+    private final String[] EMPLOYEE_ONLY_ENDPOINTS = {
+            "/notifications/send/**",
+            "/user-management/**"
+    };
 
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
@@ -49,8 +53,8 @@ public class SecurityConfig {
         return http.csrf(AbstractHttpConfigurer::disable)
                 .authorizeHttpRequests(request -> request
                         .requestMatchers(PUBLIC_ENDPOINTS).permitAll()
-                        .requestMatchers(HttpMethod.POST, "notifications/send/**")
-                        .hasAuthority("ADMIN")
+                        .requestMatchers(HttpMethod.POST, EMPLOYEE_ONLY_ENDPOINTS)
+                        .hasAuthority("EMPLOYEE")
                         .anyRequest().authenticated()
                 )
                 .httpBasic(Customizer.withDefaults())

@@ -118,7 +118,7 @@ public class AuthenticationController {
         return ResponseEntity.ok(Map.of("message", "Forgot password email resent"));
 
     }
-    @GetMapping("/logout")
+    @PostMapping("/logout")
     public ResponseEntity<?> logout(HttpServletRequest request)
     {
         try

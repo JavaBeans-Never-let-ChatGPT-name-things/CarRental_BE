@@ -11,7 +11,7 @@ spring:
 
 secret:
   secret-key: ${SECRET_JWT_KEY}
-  access-token-expiration: 900000
+  access-token-expiration: 9000000
   refresh-token-expiration: 864000000
 server:
   servlet:

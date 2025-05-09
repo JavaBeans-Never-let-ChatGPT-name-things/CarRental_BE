@@ -34,13 +34,24 @@ public class AccountInit implements CommandLineRunner {
                             .accountRole(AccountRole.USER)
                             .gender(1)
                             .enabled(true)
-                            .email("testingPurposeOnly@gmail.com")
+                            .email("user@gmail.com")
                             .displayName("Test User")
                             .build()
             );
-        }
-        if (accountRepository.findByAccountRole(AccountRole.ADMIN).isEmpty())
-        {
+            log.info("User account created successfully");
+
+            accountRepository.save(
+                    AccountEntity.builder()
+                            .username("employee")
+                            .passwordHash(new BCryptPasswordEncoder(12).encode("123456"))
+                            .gender(1)
+                            .accountRole(AccountRole.EMPLOYEE)
+                            .enabled(true)
+                            .email("employee@gmail.com")
+                            .displayName("Employee")
+                            .build());
+            log.info("Employee account created successfully");
+
             accountRepository.save(
                     AccountEntity.builder()
                             .username("admin")
@@ -48,14 +59,10 @@ public class AccountInit implements CommandLineRunner {
                             .gender(1)
                             .accountRole(AccountRole.ADMIN)
                             .enabled(true)
-                            .email("testing@gmail.com")
+                            .email("admin@gmail.com")
                             .displayName("Admin")
                             .build());
             log.info("Admin account created successfully");
         }
-        else {
-            log.info("Admin account already exists");
-        }
-
     }
 }
