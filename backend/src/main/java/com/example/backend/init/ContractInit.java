@@ -3,10 +3,7 @@ package com.example.backend.init;
 import com.example.backend.entity.AccountEntity;
 import com.example.backend.entity.CarEntity;
 import com.example.backend.entity.RentalContractEntity;
-import com.example.backend.entity.enums.CarState;
-import com.example.backend.entity.enums.ContractStatus;
-import com.example.backend.entity.enums.PaymentStatus;
-import com.example.backend.entity.enums.ReturnCarStatus;
+import com.example.backend.entity.enums.*;
 import com.example.backend.repository.AccountRepository;
 import com.example.backend.repository.CarRepository;
 import com.example.backend.repository.ContractRepository;
@@ -16,6 +13,7 @@ import org.springframework.boot.CommandLineRunner;
 import org.springframework.core.annotation.Order;
 import org.springframework.stereotype.Component;
 
+import java.time.Instant;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
@@ -34,75 +32,49 @@ public class ContractInit implements CommandLineRunner {
     public void run(String... args) throws Exception {
         if (contractRepository.count() == 0) {
             log.info("Initializing contract data...");
-            AccountEntity account = accountRepository.findById(1L).orElseThrow(
-                    () -> new RuntimeException("Account not found"));
-            List<String> carId = List.of("Audi A3", "Audi e-tron", "BMW 3 Series", "Chevrolet Camaro",
-                    "Ferrari 488 GTB", "Ferrari GTC4Lusso", "Ford Mustang");
+
+            AccountEntity user = accountRepository.findById(1L)
+                    .orElseThrow(() -> new RuntimeException("User account not found"));
+
+            List<String> carIds = List.of(
+                    "Audi A3","Audi e-tron","BMW 3 Series","Chevrolet Camaro",
+                    "Ferrari 488 GTB","Ferrari GTC4Lusso","Ford Mustang"
+            );
 
             List<RentalContractEntity> contracts = new ArrayList<>();
-            Random random = new Random();
+            Random rnd = new Random();
 
-            for (int i = 0; i < carId.size(); i++) {
-                int finalI = i;
-                CarEntity car = carRepository.findById(carId.get(i)).orElseThrow(
-                        () -> new RuntimeException("Car not found: " + carId.get(finalI))
-                );
+            for (String carId : carIds) {
+                CarEntity car = carRepository.findById(carId)
+                        .orElseThrow(() -> new RuntimeException("Car not found: " + carId));
 
-                RentalContractEntity contract = new RentalContractEntity();
-                contract.setAccount(account);
-                contract.setCar(car);
+                var c = new RentalContractEntity();
+                c.setAccount(user);
+                c.setEmployee(null);
+                c.setCar(car);
 
-                LocalDate startDate = LocalDate.now().minusDays(random.nextInt(10));
-                LocalDate endDate = startDate.plusDays(3);
-                contract.setStartDate(startDate);
-                contract.setEndDate(endDate);
+                LocalDate start = LocalDate.now().minusDays(rnd.nextInt(10));
+                LocalDate end = start.plusDays(3);
+                c.setStartDate(start);
+                c.setEndDate(end);
 
-                contract.setDeposit(500.0f + i * 100);
-                contract.setPaymentMethod("PayOS");
-                contract.setTotalPrice(1000.0f + i * 200);
-                contract.setPenaltyFee(0.0f);
+                c.setDeposit(500f + rnd.nextInt(500));
+                c.setTotalPrice(1000f + rnd.nextInt(1000));
+                c.setPaymentMethod("PayOS");
 
-                boolean isPaid = random.nextBoolean();
-                if (isPaid) {
-                    contract.setPaymentStatus(PaymentStatus.SUCCESS);
+                c.setRetryCountLeft(3);
+                c.setLastRetryAt(null);
 
-                    int statusCase = random.nextInt(5);
-                    switch (statusCase) {
-                        case 0 -> {
-                            contract.setContractStatus(ContractStatus.BOOKED);
-                            car.setState(CarState.RENTED);
-                        }
-                        case 1 -> {
-                            contract.setContractStatus(ContractStatus.PICKED_UP);
-                            car.setState(CarState.RENTED);
-                        }
-                        case 2 -> {
-                            contract.setContractStatus(ContractStatus.COMPLETE);
-                            contract.setReturnDate(endDate);
-                            contract.setReturnCarStatus(ReturnCarStatus.INTACT);
-                        }
-                        case 3 -> {
-                            contract.setContractStatus(ContractStatus.OVERDUE);
-                            contract.setReturnDate(null);
-                            car.setState(CarState.RENTED);
-                            contract.setReturnCarStatus(ReturnCarStatus.NOT_RETURNED);
-                        }
-                        case 4 -> {
-                            contract.setContractStatus(ContractStatus.REVIEWED);
-                            contract.setReturnDate(endDate);
-                            contract.setReturnCarStatus(ReturnCarStatus.INTACT);
-                        }
-                    }
-
+                if (rnd.nextBoolean()) {
+                    c.setPaymentStatus(PaymentStatus.SUCCESS);
+                    car.setState(CarState.RENTED);
                 } else {
-                    contract.setPaymentStatus(PaymentStatus.FAILED);
-                    contract.setContractStatus(ContractStatus.BOOKED);
-                    contract.setReturnCarStatus(null);
-                    contract.setReturnDate(null);
+                    c.setPaymentStatus(PaymentStatus.FAILED);
+                    car.setState(CarState.AVAILABLE);
                 }
-
+                c.setContractStatus(ContractStatus.BOOKED);
                 carRepository.save(car);
-                contracts.add(contract);
+                contracts.add(c);
             }
 
             contractRepository.saveAll(contracts);
@@ -112,4 +84,5 @@ public class ContractInit implements CommandLineRunner {
         }
     }
 }
+
 
