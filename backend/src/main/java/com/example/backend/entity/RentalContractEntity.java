@@ -67,9 +67,16 @@ public class RentalContractEntity extends AbstractAuditing<Long> {
     @Column(name = "retry_count_left")
     int retryCountLeft = 3;
 
+    @Column(name = "is_extendable")
+    boolean isExtendable = true;
+
     @Column(name = "contract_status")
     @Enumerated(EnumType.STRING)
     ContractStatus contractStatus;
+
+    @ManyToOne
+    @JoinColumn(name = "employee_id")
+    AccountEntity employee;
 
     @OneToOne(cascade = CascadeType.ALL)
     @JoinColumn(name = "review_id")

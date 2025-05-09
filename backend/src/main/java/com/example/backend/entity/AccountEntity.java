@@ -103,4 +103,11 @@ public class AccountEntity extends AbstractAuditing<Long>{
     public void addFCMToken(FCMTokenEntity token) {
         fcmTokens.add(token);
     }
+
+    @OneToMany(mappedBy = "employee", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    List<RentalContractEntity> managedContracts = new ArrayList<>();
+
+    public void addManagedContract(RentalContractEntity contract) {
+        managedContracts.add(contract);
+    }
 }
