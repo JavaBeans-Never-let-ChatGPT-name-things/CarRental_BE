@@ -13,11 +13,12 @@ import org.springframework.boot.CommandLineRunner;
 import org.springframework.core.annotation.Order;
 import org.springframework.stereotype.Component;
 
-import java.time.Instant;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.Random;
+import java.util.stream.Collectors;
 
 @Component
 @RequiredArgsConstructor
@@ -30,58 +31,69 @@ public class ContractInit implements CommandLineRunner {
 
     @Override
     public void run(String... args) throws Exception {
-        if (contractRepository.count() == 0) {
-            log.info("Initializing contract data...");
+        if (contractRepository.count() > 0) {
+            log.info("Contract data already exists in the database.");
+            return;
+        }
 
-            AccountEntity user = accountRepository.findById(1L)
-                    .orElseThrow(() -> new RuntimeException("User account not found"));
+        log.info("Initializing contract data...");
 
-            List<String> carIds = List.of(
-                    "Audi A3","Audi e-tron","BMW 3 Series","Chevrolet Camaro",
-                    "Ferrari 488 GTB","Ferrari GTC4Lusso","Ford Mustang"
-            );
+        List<String> carIds = List.of(
+                "Audi A3", "Audi e-tron", "BMW 3 Series", "Chevrolet Camaro",
+                "Ferrari 488 GTB", "Ferrari GTC4Lusso", "Ford Mustang"
+        );
 
-            List<RentalContractEntity> contracts = new ArrayList<>();
-            Random rnd = new Random();
+        List<CarEntity> allCars = carRepository.findAllById(carIds);
+        Map<String, CarEntity> carMap = allCars.stream()
+                .collect(Collectors.toMap(CarEntity::getId, c -> c));
 
-            for (String carId : carIds) {
-                CarEntity car = carRepository.findById(carId)
-                        .orElseThrow(() -> new RuntimeException("Car not found: " + carId));
+        Random rnd = new Random();
+        List<AccountEntity> users = accountRepository.findAll().stream()
+                .filter(a -> a.getAccountRole() == AccountRole.USER)
+                .toList();
 
-                var c = new RentalContractEntity();
-                c.setAccount(user);
-                c.setEmployee(null);
-                c.setCar(car);
+        List<RentalContractEntity> contracts = new ArrayList<>();
+
+        for (AccountEntity user : users) {
+            int numContracts = 2 + rnd.nextInt(2);
+
+            for (int i = 0; i < numContracts; i++) {
+                String randomCarId = carIds.get(rnd.nextInt(carIds.size()));
+                CarEntity car = carMap.get(randomCarId);
+
+                RentalContractEntity contract = new RentalContractEntity();
+                contract.setAccount(user);
+                contract.setEmployee(null);
+                contract.setCar(car);
 
                 LocalDate start = LocalDate.now().minusDays(rnd.nextInt(10));
                 LocalDate end = start.plusDays(3);
-                c.setStartDate(start);
-                c.setEndDate(end);
+                contract.setStartDate(start);
+                contract.setEndDate(end);
 
-                c.setDeposit(500f + rnd.nextInt(500));
-                c.setTotalPrice(1000f + rnd.nextInt(1000));
-                c.setPaymentMethod("PayOS");
+                contract.setDeposit(500f + rnd.nextInt(500));
+                contract.setTotalPrice(1000f + rnd.nextInt(1000));
+                contract.setPaymentMethod("PayOS");
 
-                c.setRetryCountLeft(3);
-                c.setLastRetryAt(null);
+                contract.setRetryCountLeft(3);
+                contract.setLastRetryAt(null);
 
                 if (rnd.nextBoolean()) {
-                    c.setPaymentStatus(PaymentStatus.SUCCESS);
+                    contract.setPaymentStatus(PaymentStatus.SUCCESS);
                     car.setState(CarState.RENTED);
                 } else {
-                    c.setPaymentStatus(PaymentStatus.FAILED);
+                    contract.setPaymentStatus(PaymentStatus.FAILED);
                     car.setState(CarState.AVAILABLE);
                 }
-                c.setContractStatus(ContractStatus.BOOKED);
-                carRepository.save(car);
-                contracts.add(c);
-            }
 
-            contractRepository.saveAll(contracts);
-            log.info("Contract data initialized successfully.");
-        } else {
-            log.info("Contract data already exists in the database.");
+                contract.setContractStatus(ContractStatus.BOOKED);
+                carRepository.save(car);
+                contracts.add(contract);
+            }
         }
+
+        contractRepository.saveAll(contracts);
+        log.info("Contract data initialized successfully.");
     }
 }
 
