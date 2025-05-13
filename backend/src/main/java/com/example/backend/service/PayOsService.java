@@ -6,6 +6,7 @@ import com.example.backend.entity.enums.PaymentStatus;
 import com.example.backend.repository.CarRepository;
 import com.example.backend.repository.ContractRepository;
 import com.example.backend.service.dto.request.Item;
+import com.example.backend.service.dto.request.NotificationFCMRequest;
 import com.example.backend.service.dto.request.PaymentRequestDTO;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
@@ -32,7 +33,7 @@ public class PayOsService {
     final String CANCEL_URL = "http://cancelpayment.com";
     final String RETURN_URL = "http://successpayment.com";
     private static final int PAYMENT_TIMEOUT =  300000;
-
+    private final FCMService fcmService;
     private final CarRepository carRepository;
     private final ContractRepository contractRepository;
 
@@ -51,7 +52,7 @@ public class PayOsService {
                 .expiredAt(expiredAt)
                 .build();
 
-        String signature = createPayOsSignature(paymentRequestDTO.getAmount(), CANCEL_URL, paymentRequestDTO.getDescription(), String.valueOf(paymentRequestDTO.getOrderCode()), RETURN_URL);
+        String signature = createPayOsSignature(paymentRequestDTO.getAmount(), paymentRequestDTO.getDescription(), String.valueOf(paymentRequestDTO.getOrderCode()));
         paymentRequestDTO.setSignature(signature);
         HttpHeaders headers = new HttpHeaders();
         headers.set("x-client-id", clientId);
@@ -72,11 +73,11 @@ public class PayOsService {
 
     }
 
-    private String createPayOsSignature(int amount, String cancelUrl, String description, String orderCode, String returnUrl){
+    private String createPayOsSignature(int amount, String description, String orderCode){
         final String HMAC_SHA256 = "HmacSHA256";
         try {
             String data = String.format(Locale.getDefault(), "amount=%d&cancelUrl=%s&description=%s&orderCode=%s&returnUrl=%s",
-                    amount, cancelUrl, description, orderCode, returnUrl);
+                    amount, CANCEL_URL, description, orderCode, RETURN_URL);
 
             Mac sha256_HMAC = Mac.getInstance(HMAC_SHA256);
             sha256_HMAC.init(new SecretKeySpec(checksumKey.getBytes(StandardCharsets.UTF_8), HMAC_SHA256));
@@ -105,6 +106,7 @@ public class PayOsService {
         pendingPayments.remove(orderId);
         contract.setPaymentStatus(PaymentStatus.SUCCESS);
         contractRepository.save(contract);
+        sendNotificationToAdmin(contract);
         return "Payment Success";
     }
     public String paymentFailed(String carId) {
@@ -114,5 +116,14 @@ public class PayOsService {
         car.setState(CarState.AVAILABLE);
         carRepository.save(car);
         return "Payment Failed";
+    }
+    public void sendNotificationToAdmin(RentalContractEntity contract) {
+        NotificationFCMRequest notificationFCMRequest = NotificationFCMRequest.builder()
+                .title("New Contract for User: " + contract.getAccount().getDisplayName())
+                .body("User " + contract.getAccount().getDisplayName() + " has successfully paid for the rental contract with ID: " + contract.getId()
+                +". Car ID: " + contract.getCar().getId())
+                .image(contract.getCar().getCarImageUrl())
+                .build();
+        fcmService.sendNotification(3L, contract.getId(), notificationFCMRequest);
     }
 }
