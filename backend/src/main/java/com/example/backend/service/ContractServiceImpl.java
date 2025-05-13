@@ -67,7 +67,7 @@ public class ContractServiceImpl implements ContractService{
         rentalContractEntity.setPaymentStatus(PaymentStatus.SUCCESS);
         carEntity.setState(CarState.RENTED);
         contractRepository.save(rentalContractEntity);
-        payOsService.sendNotifiactionToAdmin(rentalContractEntity);
+        payOsService.sendNotificationToAdmin(rentalContractEntity);
         return "Successfully paid for contract id: " + rentalContractEntity.getId();
     }
 
