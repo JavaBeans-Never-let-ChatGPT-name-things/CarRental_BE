@@ -1,11 +1,14 @@
 package com.example.backend.repository;
 
 import com.example.backend.entity.RentalContractEntity;
+import com.example.backend.entity.enums.ContractStatus;
+import com.example.backend.entity.enums.PaymentStatus;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
+import java.time.LocalDate;
 import java.util.List;
 
 @Repository
@@ -17,5 +20,8 @@ public interface ContractRepository extends JpaRepository<RentalContractEntity, 
             nativeQuery = true
     )
     List<RentalContractEntity> findAllByAccount_Username(@Param("username") String username);
+    List<RentalContractEntity> findAllByPendingIsTrueAndEmployee_Id(Long employeeId);
     List<RentalContractEntity> findAllByCar_Id(String carId);
+    List<RentalContractEntity> findAllByContractStatusIsAndStartDateBeforeAndPaymentStatusIs(ContractStatus contractStatus, LocalDate date, PaymentStatus paymentStatus);
+    List<RentalContractEntity> findAllByEmployee_Username(String username);
 }

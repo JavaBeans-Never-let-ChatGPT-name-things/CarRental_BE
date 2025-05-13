@@ -9,7 +9,9 @@ import com.example.backend.repository.AccountRepository;
 import com.example.backend.repository.ContractRepository;
 import com.example.backend.repository.FCMRepository;
 import com.example.backend.repository.NotificationRepository;
+import com.example.backend.service.dto.RentalContractDTO;
 import com.example.backend.service.dto.request.NotificationFCMRequest;
+import com.example.backend.service.mapper.RentalContractMapper;
 import jakarta.transaction.Transactional;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
@@ -39,6 +41,7 @@ public class ContractServiceImpl implements ContractService{
     AccountRepository accountRepository;
     FirebaseMessagingService firebaseMessagingService;
     PayOsService payOsService;
+    RentalContractMapper rentalContractMapper;
     Map<Long, String> pendingPayments = new ConcurrentHashMap<>();
     ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(1);
     NotificationRepository notificationRepository;
@@ -64,6 +67,7 @@ public class ContractServiceImpl implements ContractService{
         rentalContractEntity.setPaymentStatus(PaymentStatus.SUCCESS);
         carEntity.setState(CarState.RENTED);
         contractRepository.save(rentalContractEntity);
+        payOsService.sendNotifiactionToAdmin(rentalContractEntity);
         return "Successfully paid for contract id: " + rentalContractEntity.getId();
     }
 
@@ -106,9 +110,8 @@ public class ContractServiceImpl implements ContractService{
     }
 
     @Override
-    public String comfirmPickupContract(Long contractId, String token) {
-        String username = jwtService.extractUserName(token);
-        AccountEntity accountEntity = accountRepository.findByUsername(username)
+    public String assignContract(Long contractId, String employeeName) {
+        AccountEntity accountEntity = accountRepository.findByUsername(employeeName)
                 .orElseThrow(() -> new RuntimeException("Account not found"));
         RentalContractEntity rentalContract = contractRepository.findById(contractId)
                 .orElseThrow(() -> new RuntimeException("Contract not found"));
@@ -116,41 +119,162 @@ public class ContractServiceImpl implements ContractService{
         {
             return "Payment is not successful";
         }
-        if (rentalContract.getStartDate().isAfter(LocalDate.now()))
-        {
-            return "Contract is not started yet";
-        }
         rentalContract.setEmployee(accountEntity);
-        rentalContract.setContractStatus(ContractStatus.PICKED_UP);
+        rentalContract.setPending(true);
+        List<FCMTokenEntity> fcmTokenList = fcmRepository.findAllByUserId(accountEntity.getId());
+        if (!fcmTokenList.isEmpty()) {
+            for (FCMTokenEntity fcmTokenEntity : fcmTokenList) {
+                String token = fcmTokenEntity.getToken();
+                NotificationFCMRequest notificationFCMRequest = NotificationFCMRequest.builder()
+                        .token(token)
+                        .title("New Contract Assigned")
+                        .body("Contract No: " + rentalContract.getId() + " is assigned to you, please confirm or reject")
+                        .image(rentalContract.getCar().getCarImageUrl())
+                        .build();
+                firebaseMessagingService.sendNotification(notificationFCMRequest);
+            }
+        }
         contractRepository.save(rentalContract);
-        return "";
+        return "Successfully picked up contract id: " + rentalContract.getId();
     }
 
     @Override
-    public String reportLostContract(Long contractId) {
+    public String reportLostContract(Long contractId, String token) {
+        String username = jwtService.extractUserName(token);
         RentalContractEntity rentalContract = contractRepository.findById(contractId)
                 .orElseThrow(() -> new RuntimeException("Contract not found"));
+        if (!username.equals(rentalContract.getAccount().getUsername()))
+        {
+            throw new RuntimeException("You are not the owner of this contract");
+        }
         rentalContract.setContractStatus(ContractStatus.COMPLETE);
         rentalContract.setReturnCarStatus(ReturnCarStatus.LOST);
         rentalContract.setPenaltyFee(rentalContract.getPenaltyFee()+rentalContract.getCar().getRentalPrice() * 0.8f);
         contractRepository.save(rentalContract);
         sendNotificationToEmployee(rentalContract, rentalContract.getCar().getCarImageUrl(), rentalContract.getEmployee(), rentalContract.getPenaltyFee());
-        return "";
+        return "Successfully reported lost contract id: " + rentalContract.getId();
     }
 
     @Override
     public String extendContract(Long contractId, String token, int extraDays) {
+        String username = jwtService.extractUserName(token);
         RentalContractEntity rentalContract = contractRepository.findById(contractId)
                 .orElseThrow(() -> new RuntimeException("Contract not found"));
+        if (!username.equals(rentalContract.getAccount().getUsername()))
+            throw new RuntimeException("You are not the owner of this contract");
         if (rentalContract.getEndDate().minusDays(1).isAfter(LocalDate.now()))
-            throw new IllegalStateException("Too early to extend");
+            throw new RuntimeException("Too early to extend");
         if (extraDays > 4 || !rentalContract.isExtendable())
-            throw new IllegalArgumentException("Cannot extend");
+            throw new RuntimeException("Cannot extend");
 
         rentalContract.setEndDate(rentalContract.getEndDate().plusDays(extraDays));
         rentalContract.setExtendable(false);
+        List<FCMTokenEntity> fcmTokenList = fcmRepository.findAllByUserId(rentalContract.getEmployee().getId());
+        if (!fcmTokenList.isEmpty()) {
+            for (FCMTokenEntity fcmTokenEntity : fcmTokenList) {
+                String fcmToken = fcmTokenEntity.getToken();
+                NotificationFCMRequest notificationFCMRequest = NotificationFCMRequest.builder()
+                        .token(fcmToken)
+                        .title("Contract Extended")
+                        .body("Contract No: " + rentalContract.getId() + " from user " + rentalContract.getAccount().getUsername() + " has been extended by " + extraDays + " days")
+                        .image(rentalContract.getCar().getCarImageUrl())
+                        .build();
+                firebaseMessagingService.sendNotification(notificationFCMRequest);
+            }
+        }
         contractRepository.save(rentalContract);
         return "Successfully extended contract id: " + rentalContract.getId()+ " by " + extraDays + " days";
+    }
+
+    @Override
+    public String confirmAssignContract(Long contractId, String token) {
+        String username= jwtService.extractUserName(token);
+        RentalContractEntity rentalContract = contractRepository.findById(contractId)
+                .orElseThrow(() -> new RuntimeException("Contract not found"));
+        if (!username.equals(rentalContract.getEmployee().getUsername()))
+        {
+            return "You are not incharge of this contract";
+        }
+        rentalContract.setPending(false);
+        List<FCMTokenEntity> fcmTokenList = fcmRepository.findAllByUserId(rentalContract.getAccount().getId());
+        if (!fcmTokenList.isEmpty()) {
+            NotificationFCMRequest notificationFCMRequest = NotificationFCMRequest.builder()
+                    .title("Contract Assigned")
+                    .body("Contract No: " + rentalContract.getId() + " has been assigned to employee " + rentalContract.getEmployee().getDisplayName()
+                            + ", please meet he/she to pick up the car at " + rentalContract.getStartDate())
+                    .image(rentalContract.getCar().getCarImageUrl())
+                    .build();
+            for (FCMTokenEntity fcmTokenEntity : fcmTokenList) {
+                String fcmToken = fcmTokenEntity.getToken();
+                notificationFCMRequest.setToken(fcmToken);
+                firebaseMessagingService.sendNotification(notificationFCMRequest);
+            }
+            NotificationEntity notificationEntity = NotificationEntity.builder()
+                    .title(notificationFCMRequest.getTitle())
+                    .message(notificationFCMRequest.getBody())
+                    .isRead(false)
+                    .imageUrl(rentalContract.getCar().getCarImageUrl())
+                    .account(rentalContract.getAccount())
+                    .build();
+            notificationRepository.save(notificationEntity);
+        }
+        contractRepository.save(rentalContract);
+        return "Successfully confirm incharge for contract id: " + rentalContract.getId();
+    }
+
+    @Override
+    public String rejectAssignContract(Long contractId, String token) {
+        String username= jwtService.extractUserName(token);
+        RentalContractEntity rentalContract = contractRepository.findById(contractId)
+                .orElseThrow(() -> new RuntimeException("Contract not found"));
+        if (!username.equals(rentalContract.getEmployee().getUsername()))
+        {
+            return "You are not incharge of this contract";
+        }
+        sendNotificationToAdmin(rentalContract);
+        rentalContract.setEmployee(null);
+        rentalContract.setPending(false);
+        contractRepository.save(rentalContract);
+        return "Successfully rejected incharge for contract id: " + rentalContract.getId();
+    }
+
+    @Override
+    public String comfirmPickupContract(Long contractId, String token) {
+        String username= jwtService.extractUserName(token);
+        RentalContractEntity rentalContract = contractRepository.findById(contractId)
+                .orElseThrow(() -> new RuntimeException("Contract not found"));
+        if (!username.equals(rentalContract.getEmployee().getUsername()))
+        {
+            return "You are not incharge of this contract";
+        }
+        if (rentalContract.getStartDate().isAfter(LocalDate.now()))
+        {
+            return "Contract is not started yet";
+        }
+        if (rentalContract.getPaymentStatus() != PaymentStatus.SUCCESS)
+        {
+            return "Payment is not successful";
+        }
+        rentalContract.setContractStatus(ContractStatus.PICKED_UP);
+        return "Successfully confirmed pickup for contract id: " + rentalContract.getId();
+    }
+
+    private void sendNotificationToAdmin(RentalContractEntity rentalContract) {
+        List<FCMTokenEntity> fcmTokenList = fcmRepository.findAllByUserId(3L);
+        if (fcmTokenList.isEmpty()) {
+            log.info("No tokens found for admin");
+            return;
+        }
+        for (FCMTokenEntity fcmTokenEntity : fcmTokenList) {
+            String token = fcmTokenEntity.getToken();
+            NotificationFCMRequest notificationFCMRequest = NotificationFCMRequest.builder()
+                    .token(token)
+                    .title("Reject Assign Contract")
+                    .body("Employee " + rentalContract.getEmployee().getDisplayName() + " rejected contract no: " + rentalContract.getId())
+                    .image(rentalContract.getCar().getCarImageUrl())
+                    .build();
+            firebaseMessagingService.sendNotification(notificationFCMRequest);
+        }
     }
 
     @Override
@@ -168,6 +292,34 @@ public class ContractServiceImpl implements ContractService{
         carEntity.setState(CarState.AVAILABLE);
         contractRepository.save(rentalContract);
         return "Successfully returned contract id: " + rentalContract.getId();
+    }
+
+    @Override
+    public List<RentalContractDTO> getPendingContracts() {
+        return contractRepository.findAllByContractStatusIsAndStartDateBeforeAndPaymentStatusIs(ContractStatus.BOOKED, LocalDate.now(), PaymentStatus.SUCCESS)
+                .stream()
+                .filter( rentalContract -> rentalContract.getEmployee() == null)
+                .map(rentalContractMapper::toDto)
+                .toList();
+    }
+
+    @Override
+    public List<RentalContractDTO> getEmployeePendingContracts(String token) {
+        String username = jwtService.extractUserName(token);
+        AccountEntity employee = accountRepository.findByUsername(username)
+                .orElseThrow(() -> new RuntimeException("Account not found"));
+        return contractRepository.findAllByPendingIsTrueAndEmployee_Id(employee.getId())
+                .stream()
+                .map(rentalContractMapper::toDto)
+                .toList();
+    }
+
+    @Override
+    public List<RentalContractDTO> getEmployeeContracts(String token) {
+        return contractRepository.findAllByEmployee_Username(jwtService.extractUserName(token))
+                .stream()
+                .map(rentalContractMapper::toDto)
+                .toList();
     }
 
     private void sendNotificationToEmployee(RentalContractEntity rentalContract, String carImageUrl, AccountEntity employee, float penaltyFee) {
