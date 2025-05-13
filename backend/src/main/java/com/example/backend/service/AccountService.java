@@ -1,9 +1,7 @@
 package com.example.backend.service;
 
 import com.example.backend.entity.ReviewEntity;
-import com.example.backend.service.dto.AccountDTO;
-import com.example.backend.service.dto.CarDTO;
-import com.example.backend.service.dto.RentalContractDTO;
+import com.example.backend.service.dto.*;
 import com.example.backend.service.dto.request.ContractRequestDTO;
 import com.example.backend.service.dto.request.UpdateUserRequestDTO;
 
@@ -19,4 +17,9 @@ public interface AccountService {
     Long rentCar(ContractRequestDTO contractRequestDTO, String token, String carId);
     List<RentalContractDTO> getRentalContracts(String token);
     void reviewRentalContract(Long rentalContractId, ReviewEntity entity);
+    List<UserDTO> searchAndSortUsers(String query, String sort, String status);
+    UserDetailDTO getUserDetail(String displayName);
+    void upgradeUserRole(String displayName);
+    void downgradeUserRole(String displayName);
+    List<String> getAvailableEmployees(Long contractId);
 }

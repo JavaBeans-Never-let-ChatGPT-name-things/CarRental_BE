@@ -4,14 +4,13 @@ import com.example.backend.entity.AccountEntity;
 import com.example.backend.entity.CarEntity;
 import com.example.backend.entity.RentalContractEntity;
 import com.example.backend.entity.ReviewEntity;
+import com.example.backend.entity.enums.AccountRole;
 import com.example.backend.entity.enums.CarState;
 import com.example.backend.entity.enums.ContractStatus;
 import com.example.backend.repository.AccountRepository;
 import com.example.backend.repository.CarRepository;
 import com.example.backend.repository.ContractRepository;
-import com.example.backend.service.dto.AccountDTO;
-import com.example.backend.service.dto.CarDTO;
-import com.example.backend.service.dto.RentalContractDTO;
+import com.example.backend.service.dto.*;
 import com.example.backend.service.dto.request.ContractRequestDTO;
 import com.example.backend.service.dto.request.UpdateUserRequestDTO;
 import com.example.backend.service.mapper.AccountMapper;
@@ -30,6 +29,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
 
 @Slf4j
 @RequiredArgsConstructor
@@ -155,7 +155,7 @@ public class AccountServiceImpl implements AccountService{
     public List<RentalContractDTO> getRentalContracts(String token) {
         String username = jwtService.extractUserName(token);
         if (username != null) {
-            AccountEntity accountEntity = accountRepository.findByUsername(username).orElseThrow(
+            accountRepository.findByUsername(username).orElseThrow(
                     () -> new RuntimeException("Account not found")
             );
             return contractRepository.findAllByAccount_Username(username)
@@ -184,6 +184,96 @@ public class AccountServiceImpl implements AccountService{
         rentalContractEntity.setContractStatus(ContractStatus.REVIEWED);
         rentalContractEntity.setReview(entity);
         contractRepository.save(rentalContractEntity);
+    }
+
+    @Override
+    public List<UserDTO> searchAndSortUsers(String query, String sort, String status) {
+        List<AccountEntity> users = accountRepository.findAllByAccountRoleNot(AccountRole.ADMIN);
+
+        return users.stream()
+                .filter(user -> user.getDisplayName().toLowerCase().contains(query.toLowerCase()))
+                .filter(user -> {
+                    if (status.equals("Active User")) return user.isEnabled();
+                    else if (status.equals("Inactive User")) return !user.isEnabled();
+                    else return true;
+                })
+                .sorted((u1, u2) -> switch (sort) {
+                    case "Display Name" -> u1.getDisplayName().compareToIgnoreCase(u2.getDisplayName());
+                    case "Contract Count" -> Long.compare(u2.getRentalContracts().size(), u1.getRentalContracts().size());
+                    default -> 0;
+                })
+                .map(user -> UserDTO.builder()
+                        .displayName(user.getDisplayName())
+                        .email(user.getEmail())
+                        .phoneNumber(user.getPhoneNumber())
+                        .role(user.getAccountRole())
+                        .enabled(user.isEnabled())
+                        .avatarUrl(user.getAvatarUrl())
+                        .gender(user.getGender())
+                        .countractCount((long) ((user.getAccountRole() == AccountRole.USER)?(user.getRentalContracts().size()):
+                                (user.getManagedContracts().size())))
+                        .build()
+                )
+                .collect(Collectors.toList());
+    }
+
+    @Override
+    public UserDetailDTO getUserDetail(String displayName) {
+        AccountEntity accountEntity = accountRepository.findByDisplayName(displayName).orElseThrow(
+                () -> new RuntimeException("Account not found")
+        );
+        List<RentalContractEntity> rentalContracts = contractRepository.findAllByAccount_Username(accountEntity.getUsername());
+        float penaltyFee = rentalContracts.stream()
+                .map(RentalContractEntity::getPenaltyFee)
+                .reduce(0f, Float::sum);
+        return UserDetailDTO.builder()
+                .displayName(accountEntity.getDisplayName())
+                .username(accountEntity.getUsername())
+                .role(accountEntity.getAccountRole())
+                .gender(accountEntity.getGender())
+                .email(accountEntity.getEmail())
+                .phoneNumber(accountEntity.getPhoneNumber())
+                .totalPenalty(penaltyFee)
+                .rentalContracts(rentalContracts.stream().map(rentalContractMapper::toDto).toList())
+                .avatarUrl(accountEntity.getAvatarUrl())
+                .build();
+    }
+
+    @Override
+    public void upgradeUserRole(String displayName) {
+        AccountEntity accountEntity = accountRepository.findByDisplayName(displayName).orElseThrow(
+                () -> new RuntimeException("Account not found")
+        );
+        if (accountEntity.getAccountRole() == AccountRole.USER) {
+            accountEntity.setAccountRole(AccountRole.EMPLOYEE);
+            accountRepository.save(accountEntity);
+        }
+        else {
+            throw new RuntimeException("Account is not a user");
+        }
+    }
+
+    @Override
+    public void downgradeUserRole(String displayName) {
+        AccountEntity accountEntity = accountRepository.findByDisplayName(displayName).orElseThrow(
+                () -> new RuntimeException("Account not found")
+        );
+        if (accountEntity.getAccountRole() == AccountRole.EMPLOYEE) {
+            accountEntity.setAccountRole(AccountRole.USER);
+            accountRepository.save(accountEntity);
+        }
+        else {
+            throw new RuntimeException("Account is not an employee");
+        }
+    }
+
+    @Override
+    public List<String> getAvailableEmployees(Long contractId) {
+        RentalContractEntity rentalContractEntity = contractRepository.findById(contractId).orElseThrow(
+                () -> new RuntimeException("Rental contract not found")
+        );
+        return accountRepository.findAllAvailableEmployeesOnStartDate(rentalContractEntity.getStartDate())
+                .stream().map(AccountEntity::getDisplayName).toList();
     }
 
 }
