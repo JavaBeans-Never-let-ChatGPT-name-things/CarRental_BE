@@ -41,10 +41,13 @@ public class SecurityConfig {
             "/webjars/**"
     };
     private final String[] EMPLOYEE_ONLY_ENDPOINTS = {
-            "/notifications/send/**",
-            "/user-management/**"
+            "/employee-contract-management/**",
     };
-
+    private final String[] ADMIN_ONLY_ENDPOINTS = {
+            "/admin-contract-management/**",
+            "/notifications/send/**",
+            "/user-management/**",
+    };
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http.exceptionHandling(exception -> exception
@@ -53,8 +56,10 @@ public class SecurityConfig {
         return http.csrf(AbstractHttpConfigurer::disable)
                 .authorizeHttpRequests(request -> request
                         .requestMatchers(PUBLIC_ENDPOINTS).permitAll()
-                        .requestMatchers(HttpMethod.POST, EMPLOYEE_ONLY_ENDPOINTS)
+                        .requestMatchers(EMPLOYEE_ONLY_ENDPOINTS)
                         .hasAuthority("EMPLOYEE")
+                        .requestMatchers(ADMIN_ONLY_ENDPOINTS)
+                        .hasAuthority("ADMIN")
                         .anyRequest().authenticated()
                 )
                 .httpBasic(Customizer.withDefaults())
