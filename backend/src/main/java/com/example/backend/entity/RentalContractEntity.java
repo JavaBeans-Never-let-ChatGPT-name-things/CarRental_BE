@@ -78,6 +78,9 @@ public class RentalContractEntity extends AbstractAuditing<Long> {
     @JoinColumn(name = "employee_id")
     AccountEntity employee;
 
+    @Column(name = "confirm_pending")
+    boolean pending = false;
+
     @OneToOne(cascade = CascadeType.ALL)
     @JoinColumn(name = "review_id")
     ReviewEntity review;

@@ -12,6 +12,8 @@ public interface RentalContractMapper extends EntityMapper<RentalContractDTO, Re
     @Mapping(source = "car.id", target = "carId")
     @Mapping(source = "car.carImageUrl", target = "carImageUrl")
     @Mapping(source = "car.createdDate", target = "contractDate")
+    @Mapping(source = "employee.displayName", target = "employeeName")
+    @Mapping(source = "account.displayName", target = "customerName")
     RentalContractDTO toDto(RentalContractEntity contract);
 
     List<RentalContractDTO> toDto(List<RentalContractEntity> contracts);

@@ -142,4 +142,31 @@ public class AccountController {
             return ResponseEntity.ok().body(Map.of("message", e.getMessage()));
         }
     }
+
+    @PostMapping("/rentalContracts/confirmLost/{contractId}")
+    public ResponseEntity<?> reportLost(@PathVariable("contractId") Long contractId, HttpServletRequest request) {
+        String token = extractToken(request);
+        if (token == null || token.isEmpty()) {
+            return ResponseEntity.badRequest().body(Map.of("message","Token is missing or invalid"));
+        }
+        try {
+            return ResponseEntity.ok().body(Map.of("message", contractService.reportLostContract(contractId, token)));
+        } catch (RuntimeException e) {
+            return ResponseEntity.badRequest().body(Map.of("message", e.getMessage()));
+        }
+    }
+    @PostMapping("/rentalContracts/extend/{contractId}/{extraDays}")
+    public ResponseEntity<?> extendRentalContract(@PathVariable("contractId") Long contractId,
+                                                  @PathVariable("extraDays") int extraDays,
+                                                  HttpServletRequest request) {
+        String token = extractToken(request);
+        if (token == null || token.isEmpty()) {
+            return ResponseEntity.badRequest().body(Map.of("message","Token is missing or invalid"));
+        }
+        try {
+            return ResponseEntity.ok().body(Map.of("message", contractService.extendContract(contractId, token, extraDays)));
+        } catch (RuntimeException e) {
+            return ResponseEntity.badRequest().body(Map.of("message", e.getMessage()));
+        }
+    }
 }
