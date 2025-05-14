@@ -2,6 +2,7 @@ package com.example.backend.service;
 
 import com.example.backend.service.dto.CarDTO;
 import com.example.backend.service.dto.ReviewDTO;
+import com.example.backend.service.dto.request.AddCarRequestDTO;
 import com.example.backend.service.dto.request.CarPageRequestDTO;
 import org.springframework.data.domain.Page;
 
@@ -19,4 +20,5 @@ public interface CarService {
     List<ReviewDTO> findReviewsById(String id);
 
     CarDTO findById(String id);
+    String addCar(AddCarRequestDTO carDTO);
 }

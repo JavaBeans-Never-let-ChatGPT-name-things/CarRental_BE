@@ -20,8 +20,10 @@ public class CarController {
     private final CarService carService;
     private final CarBrandService carBrandService;
     @GetMapping("/")
-    public List<CarDTO> findAll() {
-        return carService.findAll();
+    public List<String> findAll() {
+        return carService.findAll().stream()
+                .map(CarDTO::getId)
+                .toList();
     }
 
     @PostMapping("/pagination")
@@ -37,7 +39,10 @@ public class CarController {
     public List<CarBrandEntity> findAllBrands() {
         return carBrandService.getAllCarBrands();
     }
-
+    @GetMapping("/brands/names")
+    public List<String> findAllBrandNames() {
+        return carBrandService.getAllBrandNames();
+    }
     @PostMapping("/pagination/filter/brand/{brandId}")
     public List<CarDTO> findByBrandIdWithPagination(@RequestBody CarPageRequestDTO carPageRequestDTO, @PathVariable("brandId") Long brandId) {
         return carService.findByBrandIdWithPagination(carPageRequestDTO, brandId).getContent();

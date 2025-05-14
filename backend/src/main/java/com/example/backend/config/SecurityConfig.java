@@ -47,6 +47,7 @@ public class SecurityConfig {
             "/admin-contract-management/**",
             "/notifications/send/**",
             "/user-management/**",
+            "/admin/**",
     };
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {

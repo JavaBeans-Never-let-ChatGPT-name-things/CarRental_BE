@@ -23,7 +23,7 @@ public class CarBrandEntity extends AbstractAuditing<Long>{
     @GeneratedValue(strategy = jakarta.persistence.GenerationType.IDENTITY)
     Long id;
 
-    @Column(name = "name", nullable = false)
+    @Column(name = "name", nullable = false, unique = true)
     String name;
 
     @Column(name = "logo_url", nullable = false)
