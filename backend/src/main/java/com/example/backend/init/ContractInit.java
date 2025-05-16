@@ -54,41 +54,98 @@ public class ContractInit implements CommandLineRunner {
 
         List<RentalContractEntity> contracts = new ArrayList<>();
 
+        LocalDate today = LocalDate.now();
+
         for (AccountEntity user : users) {
-            int numContracts = 2 + rnd.nextInt(2);
+            for (int year = 2024; year <= 2025; year++) {
+                int maxMonth = (year == 2025) ? 6 : 12;
 
-            for (int i = 0; i < numContracts; i++) {
-                String randomCarId = carIds.get(rnd.nextInt(carIds.size()));
-                CarEntity car = carMap.get(randomCarId);
+                for (int month = 1; month <= maxMonth; month++) {
+                    int numContracts = 2 + rnd.nextInt(2); // 2-3 contracts per month
 
-                RentalContractEntity contract = new RentalContractEntity();
-                contract.setAccount(user);
-                contract.setEmployee(null);
-                contract.setCar(car);
+                    for (int i = 0; i < numContracts; i++) {
+                        String randomCarId = carIds.get(rnd.nextInt(carIds.size()));
+                        CarEntity car = carMap.get(randomCarId);
 
-                LocalDate start = LocalDate.now().minusDays(rnd.nextInt(10));
-                LocalDate end = start.plusDays(3);
-                contract.setStartDate(start);
-                contract.setEndDate(end);
+                        // Random start date in current month
+                        int day = 1 + rnd.nextInt(28);
+                        LocalDate startDate = LocalDate.of(year, month, day);
+                        LocalDate endDate = startDate.plusDays(3);
 
-                contract.setDeposit(500f + rnd.nextInt(500));
-                contract.setTotalPrice(1000f + rnd.nextInt(1000));
-                contract.setPaymentMethod("PayOS");
+                        RentalContractEntity contract = new RentalContractEntity();
+                        contract.setAccount(user);
+                        contract.setEmployee(null);
+                        contract.setCar(car);
 
-                contract.setRetryCountLeft(3);
-                contract.setLastRetryAt(null);
+                        contract.setStartDate(startDate);
+                        contract.setEndDate(endDate);
 
-                if (rnd.nextBoolean()) {
-                    contract.setPaymentStatus(PaymentStatus.SUCCESS);
-                    car.setState(CarState.RENTED);
-                } else {
-                    contract.setPaymentStatus(PaymentStatus.FAILED);
-                    car.setState(CarState.AVAILABLE);
+                        contract.setDeposit(500f + rnd.nextInt(500));
+                        contract.setTotalPrice(1000f + rnd.nextInt(1000));
+                        contract.setPaymentMethod("PayOS");
+
+                        contract.setRetryCountLeft(3);
+                        contract.setLastRetryAt(null);
+
+                        // Payment Status random
+                        if (rnd.nextBoolean()) {
+                            contract.setPaymentStatus(PaymentStatus.SUCCESS);
+                            car.setState(CarState.RENTED);
+                        } else {
+                            contract.setPaymentStatus(PaymentStatus.FAILED);
+                            car.setState(CarState.AVAILABLE);
+                        }
+
+                        // Determine Contract Status
+                        ContractStatus contractStatus;
+                        if (startDate.isAfter(today)) {
+                            contractStatus = ContractStatus.BOOKED;
+                        } else {
+                            ContractStatus[] pastStatuses = {
+                                    ContractStatus.COMPLETE,
+                                    ContractStatus.OVERDUE,
+                                    ContractStatus.REVIEWED
+                            };
+                            contractStatus = pastStatuses[rnd.nextInt(pastStatuses.length)];
+                        }
+
+                        contract.setContractStatus(contractStatus);
+
+                        // Handle ReturnCarStatus & PenaltyFee if applicable
+                        if (contractStatus == ContractStatus.COMPLETE
+                                || contractStatus == ContractStatus.OVERDUE
+                                || contractStatus == ContractStatus.REVIEWED) {
+
+                            ReturnCarStatus[] returnStatuses = {
+                                    ReturnCarStatus.INTACT,
+                                    ReturnCarStatus.DAMAGED,
+                                    ReturnCarStatus.LOST
+                            };
+                            ReturnCarStatus returnStatus = returnStatuses[rnd.nextInt(returnStatuses.length)];
+
+                            contract.setReturnCarStatus(returnStatus);
+                            contract.setEmployee(accountRepository.findByUsername("employee").orElseThrow(
+                                    () -> new RuntimeException("Employee not found")));
+                            car.setState(CarState.AVAILABLE);
+
+                            if (returnStatus == ReturnCarStatus.LOST) {
+                                contract.setPenaltyFee(car.getRentalPrice());
+                                car.setState(CarState.UNDER_MAINTENANCE);
+                            } else if (returnStatus == ReturnCarStatus.DAMAGED) {
+                                contract.setPenaltyFee(contract.getPenaltyFee() + 100f);
+                                car.setState(CarState.UNDER_MAINTENANCE);
+                            } else {
+                                contract.setPenaltyFee(0f);
+                            }
+                        } else {
+                            contract.setReturnCarStatus(null);
+                            contract.setPenaltyFee(0f);
+                        }
+
+                        carRepository.save(car);
+                        contracts.add(contract);
+                    }
                 }
-
-                contract.setContractStatus(ContractStatus.BOOKED);
-                carRepository.save(car);
-                contracts.add(contract);
             }
         }
 

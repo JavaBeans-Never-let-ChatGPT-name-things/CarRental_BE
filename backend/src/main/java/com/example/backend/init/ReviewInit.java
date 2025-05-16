@@ -48,7 +48,8 @@ public class ReviewInit implements CommandLineRunner {
 
             List<RentalContractEntity> successfulContracts = contractRepository.findAll()
                     .stream()
-                    .filter(contract -> contract.getContractStatus().equals(ContractStatus.COMPLETE))
+                    .filter(contract -> contract.getContractStatus().equals(ContractStatus.COMPLETE) ||
+                            contract.getContractStatus().equals(ContractStatus.REVIEWED))
                     .toList();
             Random random = new Random();
 
@@ -59,11 +60,6 @@ public class ReviewInit implements CommandLineRunner {
                         .orElseThrow(() -> new RuntimeException("Account not found"));
                 CarEntity car = carRepository.findById(contract.getCar().getId())
                         .orElseThrow(() -> new RuntimeException("Car not found"));
-                if (car.getState() != CarState.RENTED)
-                {
-                    log.warn("Car is not in rented state, skipping review.");
-                    continue;
-                }
                 car.setReviewsNum(car.getReviewsNum() + 1);
                 car.setRating((car.getRating() * (car.getReviewsNum() - 1) + starNum) / car.getReviewsNum());
                 carRepository.save(car);
