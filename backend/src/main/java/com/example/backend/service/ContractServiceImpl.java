@@ -11,6 +11,9 @@ import com.example.backend.repository.FCMRepository;
 import com.example.backend.repository.NotificationRepository;
 import com.example.backend.service.dto.RentalContractDTO;
 import com.example.backend.service.dto.request.NotificationFCMRequest;
+import com.example.backend.service.dto.response.ContractSummaryDTO;
+import com.example.backend.service.dto.response.MonthlyReportDTO;
+import com.example.backend.service.dto.response.ReturnedStatusDTO;
 import com.example.backend.service.mapper.RentalContractMapper;
 import jakarta.transaction.Transactional;
 import lombok.AccessLevel;
@@ -322,6 +325,109 @@ public class ContractServiceImpl implements ContractService{
                 .toList();
     }
 
+    @Override
+    public List<MonthlyReportDTO> totalRevenueByMonth(int year) {
+        List<Object[]> monthlyRevenue = contractRepository.findMonthlyRevenueByYear(year);
+        return monthlyRevenue.stream()
+                .map(obj -> {
+                    int month = ((Number) obj[0]).intValue();
+                    double revenue = ((Number) obj[1]).doubleValue();
+                    return MonthlyReportDTO.builder()
+                            .month(month)
+                            .value(Math.ceil(revenue))
+                            .build();
+                }).toList();
+    }
+
+    @Override
+    public List<MonthlyReportDTO> totalPenaltyByMonth(int year) {
+        List<Object[]> monthlyPenalty = contractRepository.findMonthlyPenaltyByYear(year);
+        return monthlyPenalty.stream()
+                .map(obj ->{
+                    int month = (Integer) obj[0];
+                    double revenue = (Double) obj[1];
+                    return MonthlyReportDTO.builder()
+                            .month(month)
+                            .value(Math.ceil(revenue))
+                            .build();
+                }).toList();
+    }
+
+    @Override
+    public Double totalRevenueFromDateToDate(LocalDate startDate, LocalDate endDate) {
+        return Math.ceil(contractRepository.totalRevenueFromDateToDate(startDate, endDate));
+    }
+
+    @Override
+    public Double totalPenaltyFromDateToDate(LocalDate startDate, LocalDate endDate) {
+        return Math.ceil(contractRepository.totalPenaltyFromDateToDate(startDate, endDate));
+    }
+
+    @Override
+    public Double totalRevenue() {
+        return  Math.ceil(contractRepository.totalRevenue());
+    }
+
+    @Override
+    public Double totalPenalty() {
+        return  Math.ceil(contractRepository.totalPenalty());
+    }
+
+    @Override
+    public List<ContractSummaryDTO> getContractSummaryFromDateToDate(LocalDate startDate, LocalDate endDate) {
+        List<Object[]> contractSummary = contractRepository.countContractsByStatusFromDateToDate(startDate, endDate);
+        return contractSummary.stream()
+                .map(obj ->{
+                    String status = ((String) obj[0]);
+                    int count = ((Long) obj[1]).intValue();
+                    return ContractSummaryDTO.builder()
+                            .contractStatus(ContractStatus.valueOf(status))
+                            .value(count)
+                            .build();
+                }).toList();
+    }
+
+    @Override
+    public List<ContractSummaryDTO> getContractSummary() {
+        List<Object[]> contractSummary = contractRepository.countContractsByStatus();
+        return contractSummary.stream()
+                .map(obj ->{
+                    String status = ((String) obj[0]);
+                    int count = ((Long) obj[1]).intValue();
+                    return ContractSummaryDTO.builder()
+                            .contractStatus(ContractStatus.valueOf(status))
+                            .value(count)
+                            .build();
+                }).toList();
+    }
+
+    @Override
+    public List<ReturnedStatusDTO> getReturnedStatusFromDateToDate(LocalDate startDate, LocalDate endDate) {
+        List<Object[]> returnedStatus = contractRepository.countContractsByReturnCarStatusFromDateToDate(startDate, endDate);
+        return returnedStatus.stream()
+                .map(obj ->{
+                    String status = ((String) obj[0]);
+                    int count = ((Long) obj[1]).intValue();
+                    return ReturnedStatusDTO.builder()
+                            .returnCarStatus(ReturnCarStatus.valueOf(status))
+                            .value(count)
+                            .build();
+                }).toList();
+    }
+
+    @Override
+    public List<ReturnedStatusDTO> getReturnedStatus() {
+        List<Object[]> returnedStatus = contractRepository.countContractsByReturnCarStatus();
+        return returnedStatus.stream()
+                .map(obj ->{
+                    String status = ((String) obj[0]);
+                    int count = ((Long) obj[1]).intValue();
+                    return ReturnedStatusDTO.builder()
+                            .returnCarStatus(ReturnCarStatus.valueOf(status))
+                            .value(count)
+                            .build();
+                }).toList();
+    }
     private void sendNotificationToEmployee(RentalContractEntity rentalContract, String carImageUrl, AccountEntity employee, float penaltyFee) {
         List<FCMTokenEntity> fcmTokenList = fcmRepository.findAllByUserId(employee.getId());
         if (fcmTokenList.isEmpty()) {
