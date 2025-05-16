@@ -4,6 +4,7 @@ import com.example.backend.entity.ReviewEntity;
 import com.example.backend.service.dto.*;
 import com.example.backend.service.dto.request.ContractRequestDTO;
 import com.example.backend.service.dto.request.UpdateUserRequestDTO;
+import com.example.backend.service.dto.response.UserSummaryDTO;
 
 import java.io.IOException;
 import java.util.List;
@@ -22,4 +23,7 @@ public interface AccountService {
     void upgradeUserRole(String displayName);
     void downgradeUserRole(String displayName);
     List<String> getAvailableEmployees(Long contractId);
+
+    List<UserSummaryDTO> top3BestUser();
+    List<UserSummaryDTO> top3WordUser();
 }

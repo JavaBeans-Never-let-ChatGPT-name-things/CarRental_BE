@@ -7,12 +7,14 @@ import com.example.backend.entity.ReviewEntity;
 import com.example.backend.entity.enums.AccountRole;
 import com.example.backend.entity.enums.CarState;
 import com.example.backend.entity.enums.ContractStatus;
+import com.example.backend.entity.enums.ReturnCarStatus;
 import com.example.backend.repository.AccountRepository;
 import com.example.backend.repository.CarRepository;
 import com.example.backend.repository.ContractRepository;
 import com.example.backend.service.dto.*;
 import com.example.backend.service.dto.request.ContractRequestDTO;
 import com.example.backend.service.dto.request.UpdateUserRequestDTO;
+import com.example.backend.service.dto.response.UserSummaryDTO;
 import com.example.backend.service.mapper.AccountMapper;
 import com.example.backend.service.mapper.CarMapper;
 import com.example.backend.service.mapper.ContractRequestMapper;
@@ -22,6 +24,7 @@ import lombok.experimental.FieldDefaults;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
+import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -276,4 +279,77 @@ public class AccountServiceImpl implements AccountService{
                 .stream().map(AccountEntity::getDisplayName).toList();
     }
 
+    @Override
+    public List<UserSummaryDTO> top3BestUser() {
+        return accountRepository.findAllByAccountRole(AccountRole.USER).stream()
+                .sorted(Comparator.comparingDouble(this::calculateUserScore).reversed())
+                .limit(3)
+                .map(account ->
+                    UserSummaryDTO.builder()
+                            .username(account.getUsername())
+                            .email(account.getEmail())
+                            .displayName(account.getDisplayName())
+                            .creditPoint(calculateUserScore(account))
+                            .build())
+                .toList();
+    }
+
+    @Override
+    public List<UserSummaryDTO> top3WordUser() {
+        return accountRepository.findAllByAccountRole(AccountRole.USER).stream()
+                .sorted(Comparator.comparingDouble(this::calculateUserScore))
+                .limit(3)
+                .map(account ->
+                        UserSummaryDTO.builder()
+                                .username(account.getUsername())
+                                .email(account.getEmail())
+                                .displayName(account.getDisplayName())
+                                .creditPoint(calculateUserScore(account))
+                                .build())
+                .toList();
+    }
+    private double calculateUserScore(AccountEntity account) {
+        long completedContracts = account.getRentalContracts().stream()
+                .filter(c -> c.getContractStatus() == ContractStatus.COMPLETE || c.getContractStatus() == ContractStatus.REVIEWED)
+                .count();
+
+        long overdueContracts = account.getRentalContracts().stream()
+                .filter(c -> c.getContractStatus() == ContractStatus.OVERDUE || c.getContractStatus() == ContractStatus.EXPIRED)
+                .count();
+
+        long intactReturns = account.getRentalContracts().stream()
+                .filter(c -> c.getReturnCarStatus() == ReturnCarStatus.INTACT)
+                .count();
+
+        long damagedOrLostReturns = account.getRentalContracts().stream()
+                .filter(c -> c.getReturnCarStatus() == ReturnCarStatus.DAMAGED || c.getReturnCarStatus() == ReturnCarStatus.LOST)
+                .count();
+
+        long notReturned = account.getRentalContracts().stream()
+                .filter(c -> c.getReturnCarStatus() == ReturnCarStatus.NOT_RETURNED)
+                .count();
+
+        double averageRating = account.getRentalContracts().stream()
+                .filter(c -> c.getReview() != null)
+                .mapToDouble(c -> c.getReview().getStarsNum())
+                .average()
+                .orElse(0.0);
+
+        long failedRetries = account.getRentalContracts().stream()
+                .filter(c -> c.getRetryCountLeft() == 0)
+                .count();
+
+        long successPayments = account.getRentalContracts().stream()
+                .filter(c -> c.getPaymentStatus().name().equals("SUCCESS"))
+                .count();
+
+        return completedContracts * 5
+                + intactReturns * 3
+                + successPayments * 2
+                + averageRating * 2
+                - overdueContracts * 5
+                - damagedOrLostReturns * 4
+                - failedRetries * 2
+                - notReturned * 10;
+    }
 }

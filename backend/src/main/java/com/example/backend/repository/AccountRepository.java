@@ -33,5 +33,5 @@ public interface AccountRepository extends JpaRepository<AccountEntity, Long> {
     )
     List<AccountEntity> findAllAvailableEmployeesOnStartDate(@Param("startDate") LocalDate startDate);
 
-
+    List<AccountEntity> findAllByAccountRole(AccountRole accountRole);
 }
