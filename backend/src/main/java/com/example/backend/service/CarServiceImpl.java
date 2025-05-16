@@ -13,6 +13,7 @@ import com.example.backend.service.dto.CarDTO;
 import com.example.backend.service.dto.ReviewDTO;
 import com.example.backend.service.dto.request.AddCarRequestDTO;
 import com.example.backend.service.dto.request.CarPageRequestDTO;
+import com.example.backend.service.dto.response.CarSummaryDTO;
 import com.example.backend.service.mapper.CarMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -20,8 +21,13 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
+import java.math.BigDecimal;
+import java.math.RoundingMode;
+import java.time.LocalDate;
 import java.util.List;
 import java.util.Objects;
+
+import static java.util.stream.Collectors.toList;
 
 @Service
 @RequiredArgsConstructor
@@ -150,5 +156,70 @@ public class CarServiceImpl implements CarService{
             log.error("Error adding car with ID: {}. Error: {}", carDTO.getId(), e.getMessage());
             return "Failed to add car " + carDTO.getId() + ": " + e.getMessage();
         }
+    }
+
+    @Override
+    public List<CarSummaryDTO> top3CarsWithMostRentalCount() {
+        List<Object[]> top3Cars = carRepository.findTop3ByRentalCount();
+        return top3Cars.stream()
+                .map(obj -> {
+                    Long rentalCount = (Long) obj[0];
+                    String id = (String) obj[1];
+                    String imageUrl = (String) obj[4];
+                    return CarSummaryDTO.builder()
+                            .id(id)
+                            .imageUrl(imageUrl)
+                            .rentalCount(rentalCount)
+                            .build();
+                })
+                .toList();
+    }
+
+    @Override
+    public List<CarSummaryDTO> top3CarsWithMostRentedCountFromDateToDate(LocalDate startDate, LocalDate endDate) {
+        List<Object[]> top3Cars = carRepository.findTop3ByRentalCountFromDateToDate(startDate, endDate);
+        return top3Cars.stream()
+                .map(objects -> {
+                    String id = (String) objects[1];
+                    Long rentalCount = (Long) objects[0];
+                    String imageUrl = (String) objects[4];
+                    return CarSummaryDTO.builder()
+                            .id(id)
+                            .imageUrl(imageUrl)
+                            .rentalCount(rentalCount)
+                            .build();
+                }).toList();
+    }
+
+    @Override
+    public List<CarSummaryDTO> top3CarsWithMostRating() {
+        return carRepository.findTop3ByRating().stream()
+                .map(obj ->
+                    CarSummaryDTO.builder()
+                            .id(obj.getId())
+                            .imageUrl(obj.getCarImageUrl())
+                            .rating(BigDecimal.valueOf(obj.getRating())
+                                    .setScale(2, RoundingMode.HALF_UP)
+                                    .doubleValue())
+                            .rentalCount(0L)
+                            .build()).toList();
+    }
+
+    @Override
+    public List<CarSummaryDTO> top3CarsWithMostRatingFromDateToDate(LocalDate startDate, LocalDate endDate) {
+        return carRepository.findTop3ByRatingFromDateToDate(startDate, endDate).stream()
+                .map(objects -> {
+                    String id = (String) objects[1];
+                    double rating = ((BigDecimal) objects[0])
+                            .setScale(2, RoundingMode.HALF_UP)
+                            .doubleValue();
+                    String imageUrl = (String) objects[4];
+                    return CarSummaryDTO.builder()
+                            .id(id)
+                            .imageUrl(imageUrl)
+                            .rating(rating)
+                            .rentalCount(0L)
+                            .build();
+                }).toList();
     }
 }

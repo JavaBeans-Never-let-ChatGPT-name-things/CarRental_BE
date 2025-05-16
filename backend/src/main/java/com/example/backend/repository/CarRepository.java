@@ -9,8 +9,8 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
+import java.time.LocalDate;
 import java.util.List;
-import java.util.Optional;
 
 @Repository
 public interface CarRepository extends JpaRepository<CarEntity, String> {
@@ -47,11 +47,45 @@ public interface CarRepository extends JpaRepository<CarEntity, String> {
     Long countById(@Param("id") String id);
 
     @Query(
-            value = "SELECT c.* FROM cars c " +
+            value = "SELECT COUNT(rc.id), c.* " +
+                    "FROM cars c " +
                     "JOIN rental_contracts rc ON c.id = rc.car_id " +
-                    "WHERE rc.id = :contractId",
+                    "GROUP BY c.id " +
+                    "ORDER BY COUNT(rc.id) DESC " +
+                    "LIMIT 3",
             nativeQuery = true
     )
-    Optional<CarEntity> findByContractId(@Param("contractId") Long contractId);
+    List<Object[]> findTop3ByRentalCount();
 
+    @Query(
+            value = "SELECT COUNT(rc.id), c.* " +
+                    "FROM cars c " +
+                    "JOIN rental_contracts rc ON c.id = rc.car_id " +
+                    "WHERE rc.start_date BETWEEN :startDate AND :endDate " +
+                    "GROUP BY c.id " +
+                    "ORDER BY COUNT(rc.id) DESC " +
+                    "LIMIT 3",
+            nativeQuery = true
+    )
+    List<Object[]> findTop3ByRentalCountFromDateToDate(LocalDate startDate, LocalDate endDate);
+
+    @Query(
+            value = "SELECT c.* FROM cars c " +
+                    "ORDER BY c.rating DESC " +
+                    "LIMIT 3" ,
+            nativeQuery = true
+    )
+    List<CarEntity> findTop3ByRating();
+
+    @Query(
+            value = "SELECT AVG(r.stars_num), c.* FROM cars c " +
+                    "JOIN rental_contracts rc ON c.id = rc.car_id " +
+                    "JOIN reviews r ON rc.review_id = r.id " +
+                    "WHERE rc.start_date BETWEEN :startDate AND :endDate " +
+                    "GROUP BY c.id " +
+                    "ORDER BY AVG(r.stars_num) DESC " +
+                    "LIMIT 3" ,
+            nativeQuery = true
+    )
+    List<Object[]> findTop3ByRatingFromDateToDate(LocalDate startDate, LocalDate endDate);
 }
