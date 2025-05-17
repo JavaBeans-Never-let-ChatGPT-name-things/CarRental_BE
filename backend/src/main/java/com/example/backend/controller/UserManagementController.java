@@ -2,6 +2,7 @@ package com.example.backend.controller;
 
 import com.example.backend.service.AccountService;
 import com.example.backend.service.dto.UserDTO;
+import com.example.backend.service.dto.request.ReportRequestDTO;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
 import org.springframework.http.ResponseEntity;
@@ -63,5 +64,24 @@ public class UserManagementController {
         catch (Exception e) {
             return ResponseEntity.badRequest().body(Map.of("message", e.getMessage()));
         }
+    }
+
+    @GetMapping("/top-3-best-user")
+    public ResponseEntity<?> getTop3BestUser(){
+        return ResponseEntity.ok(accountService.top3BestUser());
+    }
+    @GetMapping("/top-3-worst-user")
+    public ResponseEntity<?> getTop3WorstUser() {
+        return ResponseEntity.ok(accountService.top3WorstUser());
+    }
+
+    @PostMapping("/top-3-best-user-from-date-to-date")
+    public ResponseEntity<?> getTop3BestUserFromDateToDate(@RequestBody ReportRequestDTO requestDTO) {
+        return ResponseEntity.ok(accountService.top3BestUserFromDateToDate(requestDTO.getStartDate(), requestDTO.getEndDate()));
+    }
+
+    @PostMapping("/top-3-worst-user-from-date-to-date")
+    public ResponseEntity<?> getTop3WorstUserFromDateToDate(@RequestBody ReportRequestDTO requestDTO) {
+        return ResponseEntity.ok(accountService.top3WorstUserFromDateToDate(requestDTO.getStartDate(), requestDTO.getEndDate()));
     }
 }

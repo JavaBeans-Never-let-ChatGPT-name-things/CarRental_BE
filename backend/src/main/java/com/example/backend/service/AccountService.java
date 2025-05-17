@@ -7,6 +7,7 @@ import com.example.backend.service.dto.request.UpdateUserRequestDTO;
 import com.example.backend.service.dto.response.UserSummaryDTO;
 
 import java.io.IOException;
+import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
 
@@ -25,5 +26,7 @@ public interface AccountService {
     List<String> getAvailableEmployees(Long contractId);
 
     List<UserSummaryDTO> top3BestUser();
-    List<UserSummaryDTO> top3WordUser();
+    List<UserSummaryDTO> top3WorstUser();
+    List<UserSummaryDTO> top3BestUserFromDateToDate(LocalDate fromDate, LocalDate toDate);
+    List<UserSummaryDTO> top3WorstUserFromDateToDate(LocalDate fromDate, LocalDate toDate);
 }
