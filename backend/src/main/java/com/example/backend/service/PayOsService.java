@@ -1,14 +1,18 @@
 package com.example.backend.service;
 
+import com.example.backend.entity.FCMTokenEntity;
 import com.example.backend.entity.RentalContractEntity;
 import com.example.backend.entity.enums.CarState;
 import com.example.backend.entity.enums.PaymentStatus;
 import com.example.backend.repository.CarRepository;
 import com.example.backend.repository.ContractRepository;
+import com.example.backend.repository.FCMRepository;
 import com.example.backend.service.dto.request.Item;
 import com.example.backend.service.dto.request.NotificationFCMRequest;
 import com.example.backend.service.dto.request.PaymentRequestDTO;
+import com.google.firebase.messaging.FirebaseMessaging;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.*;
 import org.springframework.stereotype.Service;
@@ -23,7 +27,9 @@ import static com.example.backend.service.AccountServiceImpl.pendingPayments;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class PayOsService {
+    private final FirebaseMessaging firebaseMessaging;
     @Value("${pay-os.client-id}")
     private String clientId;
     @Value("${pay-os.api-key}")
@@ -33,10 +39,10 @@ public class PayOsService {
     final String CANCEL_URL = "http://cancelpayment.com";
     final String RETURN_URL = "http://successpayment.com";
     private static final int PAYMENT_TIMEOUT =  300000;
-    private final FCMService fcmService;
+    private final FirebaseMessagingService firebaseMessagingService;
     private final CarRepository carRepository;
     private final ContractRepository contractRepository;
-
+    private final FCMRepository fcmRepository;
     public String getCheckoutUrl(Item item)
     {
         int orderId = generateOrderId();
@@ -124,6 +130,20 @@ public class PayOsService {
                 +". Car ID: " + contract.getCar().getId())
                 .image(contract.getCar().getCarImageUrl())
                 .build();
-        fcmService.sendNotification(3L, contract.getId(), notificationFCMRequest);
+        try
+        {
+            List<FCMTokenEntity> fcm = fcmRepository.findAllByUserId(3L);
+            for (FCMTokenEntity fcmToken: fcm)
+            {
+                notificationFCMRequest.setToken(fcmToken.getToken());
+                firebaseMessagingService.sendNotification(notificationFCMRequest);
+            }
+
+        }
+        catch (Exception e)
+        {
+            log.info("Error sending notification to admin: {}", e.getMessage());
+        }
+        log.info("Notification sent to admin: {}", notificationFCMRequest);
     }
 }
