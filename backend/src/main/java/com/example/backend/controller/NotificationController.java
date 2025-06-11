@@ -50,4 +50,12 @@ public class NotificationController {
         }
         return ResponseEntity.ok().body(Map.of("message", fcmService.markAllNotificationAsRead(token)));
     }
+    @DeleteMapping("/deleteAll")
+    public ResponseEntity<?> deleteAllNotifications(HttpServletRequest request) {
+        String token = request.getHeader("Authorization");
+        if (token != null && token.startsWith("Bearer ")) {
+            token = token.substring(7);
+        }
+        return ResponseEntity.ok().body(Map.of("message", fcmService.deleteAllNotifications(token)));
+    }
 }

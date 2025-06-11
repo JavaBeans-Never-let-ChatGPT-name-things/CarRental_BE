@@ -109,4 +109,16 @@ public class FCMServiceImpl implements FCMService{
         }
         return "All notifications marked as read";
     }
+
+    @Override
+    public String deleteAllNotifications(String token) {
+        String username = jwtService.extractUserName(token);
+        AccountEntity account = accountRepository.findByUsername(username)
+                .orElseThrow(() -> new RuntimeException("Account not found"));
+        account.setNotifications(List.of());
+        List<NotificationEntity> notifications = notificationRepository.findByAccountId(account.getId());
+        notificationRepository.deleteAll(notifications);
+        accountRepository.save(account);
+        return "All notifications deleted successfully";
+    }
 }

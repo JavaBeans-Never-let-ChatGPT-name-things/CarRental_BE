@@ -93,11 +93,11 @@ public class ContractServiceImpl implements ContractService{
             return "Contract is expired";
         }
         if (rentalContractEntity.getRetryCountLeft() == 0 ){
-            return "You have no retry left";
+            throw new RuntimeException("You have no retry left");
         }
         Instant now = Instant.now();
         if (rentalContractEntity.getLastRetryAt() != null && Duration.between(rentalContractEntity.getLastRetryAt(), now).toMinutes() < 5) {
-            return "Please wait 5 minutes before retrying";
+            throw new RuntimeException("Please wait 5 minutes before retrying");
         }
         rentalContractEntity.setRetryCountLeft(rentalContractEntity.getRetryCountLeft() - 1);
         rentalContractEntity.setLastRetryAt(now);

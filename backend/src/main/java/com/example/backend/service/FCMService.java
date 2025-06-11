@@ -10,4 +10,5 @@ public interface FCMService {
     String sendNotification(Long userId, Long contractId, NotificationFCMRequest notificationFCMRequest);
     List<NotificationEntity> getNotifications(String token);
     String markAllNotificationAsRead(String token);
+    String deleteAllNotifications (String token);
 }

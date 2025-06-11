@@ -23,6 +23,7 @@ public class RentalContractDTO {
     boolean pending;
     ContractStatus contractStatus;
     PaymentStatus paymentStatus;
+    int retryCountLeft;
     ReturnCarStatus returnCarStatus;
     String employeeName;
     float deposit;
