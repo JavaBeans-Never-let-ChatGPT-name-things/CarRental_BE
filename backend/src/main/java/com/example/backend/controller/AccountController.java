@@ -169,4 +169,18 @@ public class AccountController {
             return ResponseEntity.badRequest().body(Map.of("message", e.getMessage()));
         }
     }
+    @GetMapping("/isQualified")
+    public ResponseEntity<?> isQualifiedToRentCar(HttpServletRequest request){
+        String token = extractToken(request);
+        if (token == null || token.isEmpty()) {
+            return ResponseEntity.badRequest().body(Map.of("message","Token is missing or invalid"));
+        }
+        try{
+            accountService.verifyAccount(token);
+            return ResponseEntity.ok().body(true);
+        }
+        catch (Exception e){
+            return ResponseEntity.ok().body(false);
+        }
+    }
 }

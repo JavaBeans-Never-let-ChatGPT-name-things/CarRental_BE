@@ -121,7 +121,7 @@ public class AccountServiceImpl implements AccountService{
     }
 
     @Override
-    public Long rentCar(ContractRequestDTO contractRequestDTO, String token, String carId) {
+    public String rentCar(ContractRequestDTO contractRequestDTO, String token, String carId) {
         String username = jwtService.extractUserName(token);
         if (username != null) {
             AccountEntity accountEntity = accountRepository.findByUsername(username).orElseThrow(
@@ -130,6 +130,10 @@ public class AccountServiceImpl implements AccountService{
             CarEntity carEntity = carRepository.findById(carId).orElseThrow(
                     () -> new RuntimeException("Car not found")
             );
+            if (accountEntity.getAccountRole() != AccountRole.USER)
+            {
+                throw new RuntimeException("Only users can rent cars");
+            }
             if (carEntity.getState() != CarState.AVAILABLE) {
                 throw new RuntimeException("Car is not available");
             }
@@ -149,7 +153,7 @@ public class AccountServiceImpl implements AccountService{
                 }
             }, 5, TimeUnit.MINUTES);
 
-            return result;
+            return "Successfully rented car with ID: " + carEntity.getId();
         }
         throw new RuntimeException("Token is invalid");
     }
@@ -277,6 +281,18 @@ public class AccountServiceImpl implements AccountService{
         );
         return accountRepository.findAllAvailableEmployeesOnStartDate(rentalContractEntity.getStartDate())
                 .stream().map(AccountEntity::getDisplayName).toList();
+    }
+
+    @Override
+    public void verifyAccount(String token) {
+        String username = jwtService.extractUserName(token);
+        AccountEntity entity = accountRepository.findByUsername(username).orElseThrow(
+                () -> new RuntimeException("Account not found")
+        );
+        if (entity.getPhoneNumber().isEmpty() || entity.getAddress().isEmpty())
+        {
+            throw new RuntimeException("Unqualified");
+        }
     }
 
     @Override

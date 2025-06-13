@@ -16,7 +16,7 @@ public interface AccountService {
     void updateFavouriteCar(String carId, String token);
     List<CarDTO> getFavouriteCars(String token);
     void updateProfile(UpdateUserRequestDTO updateUserRequestDTO, String token) throws IOException;
-    Long rentCar(ContractRequestDTO contractRequestDTO, String token, String carId);
+    String rentCar(ContractRequestDTO contractRequestDTO, String token, String carId);
     List<RentalContractDTO> getRentalContracts(String token);
     void reviewRentalContract(Long rentalContractId, ReviewEntity entity);
     List<UserDTO> searchAndSortUsers(String query, String sort, String status);
@@ -24,6 +24,7 @@ public interface AccountService {
     void upgradeUserRole(String displayName);
     void downgradeUserRole(String displayName);
     List<String> getAvailableEmployees(Long contractId);
+    void verifyAccount(String token);
 
     List<UserSummaryDTO> top3BestUser();
     List<UserSummaryDTO> top3WorstUser();
