@@ -119,9 +119,15 @@ public class CarServiceImpl implements CarService{
     public String addCar(AddCarRequestDTO carDTO) {
         try
         {
-            log.info("Adding car with ID: {}", carDTO);
             CarBrandEntity carBrand = carBrandRepository.findByName(carDTO.getBrandName())
                     .orElseThrow(() -> new RuntimeException("Car brand not found"));
+            List<String> existingCarIds = carRepository.findAll()
+                    .stream()
+                    .map(CarEntity::getId)
+                    .toList();
+            if (existingCarIds.contains(carDTO.getId())) {
+                return "Car already exists";
+            }
             if (carDTO.getCarImage() != null)
             {
                 String url = cloudinaryService.uploadFile(carDTO.getCarImage(), "car");

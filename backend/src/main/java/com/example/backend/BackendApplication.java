@@ -9,7 +9,7 @@ import io.swagger.v3.oas.annotations.info.Info;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.context.annotation.Bean;
-import org.springframework.core.io.ClassPathResource;
+import org.springframework.core.io.PathResource;
 import org.springframework.scheduling.annotation.EnableScheduling;
 
 @SpringBootApplication
@@ -20,7 +20,7 @@ public class BackendApplication {
     @Bean
     FirebaseMessaging firebaseMessaging() throws Exception {
         GoogleCredentials googleCredentials = GoogleCredentials
-                .fromStream(new ClassPathResource("carrental-62623-firebase-adminsdk-fbsvc-e4986a1484.json").getInputStream());
+                .fromStream(new PathResource("carrental-62623-firebase-adminsdk-fbsvc-e4986a1484.json").getInputStream());
         FirebaseOptions firebaseOptions = FirebaseOptions.builder()
                 .setCredentials(googleCredentials)
                 .build();
