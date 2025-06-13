@@ -121,7 +121,7 @@ public class AccountServiceImpl implements AccountService{
     }
 
     @Override
-    public String rentCar(ContractRequestDTO contractRequestDTO, String token, String carId) {
+    public Long rentCar(ContractRequestDTO contractRequestDTO, String token, String carId) {
         String username = jwtService.extractUserName(token);
         if (username != null) {
             AccountEntity accountEntity = accountRepository.findByUsername(username).orElseThrow(
@@ -153,7 +153,7 @@ public class AccountServiceImpl implements AccountService{
                 }
             }, 5, TimeUnit.MINUTES);
 
-            return "Successfully rented car with ID: " + carEntity.getId();
+            return result;
         }
         throw new RuntimeException("Token is invalid");
     }

@@ -299,7 +299,7 @@ public class ContractServiceImpl implements ContractService{
 
     @Override
     public List<RentalContractDTO> getPendingContracts() {
-        return contractRepository.findAllByContractStatusIsAndStartDateAfterAndPaymentStatusIs(ContractStatus.BOOKED, LocalDate.now(), PaymentStatus.SUCCESS)
+        return contractRepository.findAllByContractStatusIsAndStartDateIsGreaterThanEqualAndPaymentStatusIs(ContractStatus.BOOKED.name(), LocalDate.now(), PaymentStatus.SUCCESS.name())
                 .stream()
                 .filter( rentalContract -> rentalContract.getEmployee() == null)
                 .map(rentalContractMapper::toDto)

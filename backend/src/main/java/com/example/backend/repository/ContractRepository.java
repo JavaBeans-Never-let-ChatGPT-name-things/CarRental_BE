@@ -22,7 +22,16 @@ public interface ContractRepository extends JpaRepository<RentalContractEntity, 
     List<RentalContractEntity> findAllByAccount_Username(@Param("username") String username);
     List<RentalContractEntity> findAllByPendingIsTrueAndEmployee_Id(Long employeeId);
     List<RentalContractEntity> findAllByCar_Id(String carId);
-    List<RentalContractEntity> findAllByContractStatusIsAndStartDateAfterAndPaymentStatusIs(ContractStatus contractStatus, LocalDate date, PaymentStatus paymentStatus);
+    @Query(
+            value = "SELECT rc.* FROM rental_contracts rc " +
+                    "WHERE rc.contract_status = :contractStatus " +
+                    "AND DATE (rc.start_date) >= :date " +
+                    "AND rc.payment_status = :paymentStatus",
+            nativeQuery = true
+    )
+    List<RentalContractEntity> findAllByContractStatusIsAndStartDateIsGreaterThanEqualAndPaymentStatusIs(@Param("contractStatus") String contractStatus,
+                                                                                                         @Param("date") LocalDate date,
+                                                                                                         @Param("paymentStatus") String paymentStatus);
     List<RentalContractEntity> findAllByEmployee_Username(String username);
 
     @Query(
